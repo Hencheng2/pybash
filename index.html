@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Web Terminal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Fira Code', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+        }
+
+        body {
+            background: #0a0e14;
+            color: #e6e6e6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .terminal-container {
+            width: 100%;
+            max-width: 900px;
+            background: #0d1117;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .terminal-header {
+            background: #161b22;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .terminal-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+
+        .close { background: #ff5f56; }
+        .minimize { background: #ffbd2e; }
+        .maximize { background: #27c93f; }
+
+        .terminal-title {
+            font-weight: 600;
+            color: #f0f6fc;
+            font-size: 14px;
+        }
+
+        .terminal-body {
+            padding: 20px;
+            height: 500px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #30363d #0a0e14;
+        }
+
+        .terminal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terminal-body::-webkit-scrollbar-track {
+            background: #0a0e14;
+        }
+
+        .terminal-body::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 4px;
+        }
+
+        .prompt {
+            color: #58a6ff;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .command-input {
+            background: transparent;
+            border: none;
+            color: #f0f6fc;
+            font-size: 16px;
+            width: calc(100% - 120px);
+            outline: none;
+            caret-color: #58a6ff;
+            resize: none;
+            padding: 5px 0;
+            min-height: 24px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .input-line {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .user {
+            color: #3fb950;
+        }
+
+        .host {
+            color: #a5d6ff;
+        }
+
+        .path {
+            color: #e3b341;
+        }
+
+        .output {
+            margin-bottom: 15px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .success {
+            color: #3fb950;
+        }
+
+        .error {
+            color: #ff7b72;
+        }
+
+        .info {
+            color: #79c0ff;
+        }
+
+        .directory {
+            color: #d2a8ff;
+        }
+
+        .file {
+            color: #c9d1d9;
+        }
+
+        .command-block {
+            margin-bottom: 15px;
+        }
+
+        .multiline-indicator {
+            color: #8b949e;
+            margin-right: 8px;
+        }
+
+        .help-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+
+        .help-table td {
+            padding: 5px 10px;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .help-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .key-combo {
+            color: #ff7b72;
+            font-weight: bold;
+        }
+
+        .terminal-footer {
+            background: #161b22;
+            padding: 12px 20px;
+            border-top: 1px solid #30363d;
+            font-size: 13px;
+            color: #8b949e;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .shortcut {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .shortcut-key {
+            background: #30363d;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .terminal-footer {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .terminal-body {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="terminal-controls">
+                <div class="control close"></div>
+                <div class="control minimize"></div>
+                <div class="control maximize"></div>
+            </div>
+            <div class="terminal-title">bash — Modern Web Terminal</div>
+            <div></div>
+        </div>
+        
+        <div class="terminal-body" id="terminalOutput">
+            <div class="output info">Welcome to Modern Web Terminal v1.0.0</div>
+            <div class="output info">Type 'help' to see available commands, 'clear' to clear the screen</div>
+            <div class="output info">Use Shift+Enter for multi-line input. Press Enter to execute.</div>
+            <div class="output"><br></div>
+            
+            <!-- Initial command to show -->
+            <div class="command-block">
+                <div>
+                    <span class="prompt"><span class="user">user</span>@<span class="host">web-terminal</span>:<span class="path">~</span>$</span>
+                    <span>ls -la</span>
+                </div>
+                <div class="output">
+                    total 32<br>
+                    drwxr-xr-x  5 user user  4096 Jun 15 10:30 <span class="directory">.</span><br>
+                    drwxr-xr-x 17 user user  4096 Jun 15 09:45 <span class="directory">..</span><br>
+                    -rw-r--r--  1 user user   220 Jun 15 10:20 <span class="file">.bashrc</span><br>
+                    drwxr-xr-x  2 user user  4096 Jun 15 10:25 <span class="directory">documents</span><br>
+                    drwxr-xr-x  2 user user  4096 Jun 15 10:26 <span class="directory">downloads</span><br>
+                    -rw-r--r--  1 user user  1234 Jun 15 10:30 <span class="file">example.txt</span><br>
+                    drwxr-xr-x  2 user user  4096 Jun 15 10:25 <span class="directory">projects</span>
+                </div>
+            </div>
+            
+            <div class="input-line">
+                <span class="prompt"><span class="user">user</span>@<span class="host">web-terminal</span>:<span class="path">~</span>$</span>
+                <textarea class="command-input" id="commandInput" rows="1" placeholder="Type your command here..." autofocus></textarea>
+            </div>
+        </div>
+        
+        <div class="terminal-footer">
+            <div class="shortcut">
+                <i class="fas fa-code-branch"></i>
+                <span>main</span>
+            </div>
+            <div class="shortcut">
+                <i class="fas fa-keyboard"></i>
+                <span>Press <span class="shortcut-key">Enter</span> to execute</span>
+            </div>
+            <div class="shortcut">
+                <i class="fas fa-keyboard"></i>
+                <span>Press <span class="shortcut-key">Shift+Enter</span> for new line</span>
+            </div>
+            <div class="shortcut">
+                <i class="fas fa-terminal"></i>
+                <span>bash</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const terminalOutput = document.getElementById('terminalOutput');
+        const commandInput = document.getElementById('commandInput');
+        let commandHistory = [];
+        let historyIndex = -1;
+        let isMultiline = false;
+
+        // Focus the input on load
+        commandInput.focus();
+
+        // Adjust textarea height based on content
+        commandInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            
+            // Check if we're in multiline mode
+            isMultiline = this.value.includes('\n');
+        });
+
+        // Handle keyboard events
+        commandInput.addEventListener('keydown', function(e) {
+            // Execute command on Enter (without Shift)
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                executeCommand(this.value);
+            }
+            
+            // Navigate history with up/down arrows
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (commandHistory.length > 0) {
+                    if (historyIndex === -1) {
+                        historyIndex = commandHistory.length;
+                    }
+                    historyIndex = Math.max(0, historyIndex - 1);
+                    this.value = commandHistory[historyIndex];
+                    adjustTextareaHeight();
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (commandHistory.length > 0 && historyIndex >= 0) {
+                    historyIndex = Math.min(commandHistory.length - 1, historyIndex + 1);
+                    if (historyIndex === commandHistory.length - 1) {
+                        this.value = '';
+                    } else {
+                        this.value = commandHistory[historyIndex];
+                    }
+                    adjustTextareaHeight();
+                }
+            }
+            
+            // Clear command with Escape key
+            if (e.key === 'Escape') {
+                this.value = '';
+                this.style.height = '24px';
+                isMultiline = false;
+            }
+            
+            // Clear terminal with Ctrl+L
+            if (e.key === 'l' && e.ctrlKey) {
+                e.preventDefault();
+                clearTerminal();
+            }
+        });
+
+        function adjustTextareaHeight() {
+            commandInput.style.height = 'auto';
+            commandInput.style.height = (commandInput.scrollHeight) + 'px';
+            isMultiline = commandInput.value.includes('\n');
+        }
+
+        function executeCommand(cmd) {
+            if (!cmd.trim() && !isMultiline) return;
+            
+            // Add to command history
+            if (cmd.trim()) {
+                commandHistory.push(cmd);
+                historyIndex = -1;
+            }
+            
+            // Create command block
+            const commandBlock = document.createElement('div');
+            commandBlock.className = 'command-block';
+            
+            // Format the command with line numbers if multiline
+            let formattedCommand = '';
+            if (isMultiline) {
+                const lines = cmd.split('\n');
+                formattedCommand = lines.map((line, i) => 
+                    `<div>${i > 0 ? '<span class="multiline-indicator">> </span>' : ''}${escapeHtml(line)}</div>`
+                ).join('');
+            } else {
+                formattedCommand = escapeHtml(cmd);
+            }
+            
+            commandBlock.innerHTML = `
+                <div>
+                    <span class="prompt"><span class="user">user</span>@<span class="host">web-terminal</span>:<span class="path">~</span>$</span>
+                    ${formattedCommand}
+                </div>
+            `;
+            
+            // Create output element
+            const outputElement = document.createElement('div');
+            outputElement.className = 'output';
+            
+            // Process the command
+            processCommand(cmd, outputElement);
+            
+            // Add elements to terminal
+            terminalOutput.insertBefore(commandBlock, terminalOutput.lastElementChild);
+            terminalOutput.insertBefore(outputElement, terminalOutput.lastElementChild);
+            
+            // Clear input and reset
+            commandInput.value = '';
+            commandInput.style.height = '24px';
+            isMultiline = false;
+            
+            // Scroll to bottom
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+
+        function processCommand(cmd, outputElement) {
+            const command = cmd.trim().toLowerCase();
+            
+            if (command === 'clear' || command === 'cls') {
+                clearTerminal();
+                return;
+            }
+            
+            if (command === 'help') {
+                outputElement.innerHTML = `
+                    <div class="info">Available commands:</div>
+                    <table class="help-table">
+                        <tr><td><span class="success">help</span></td><td>Show this help message</td></tr>
+                        <tr><td><span class="success">clear</span></td><td>Clear the terminal screen</td></tr>
+                        <tr><td><span class="success">ls</span></td><td>List directory contents</td></tr>
+                        <tr><td><span class="success">pwd</span></td><td>Print working directory</td></tr>
+                        <tr><td><span class="success">whoami</span></td><td>Display current user</td></tr>
+                        <tr><td><span class="success">date</span></td><td>Show current date and time</td></tr>
+                        <tr><td><span class="success">echo [text]</span></td><td>Display a line of text</td></tr>
+                        <tr><td><span class="success">cat [file]</span></td><td>Concatenate and display file content</td></tr>
+                    </table>
+                    <div class="info">You can also use multi-line commands for scripting</div>
+                `;
+                return;
+            }
+            
+            if (command === 'ls' || command === 'ls -la') {
+                outputElement.innerHTML = `
+                    total 32<br>
+                    drwxr-xr-x  5 user user  4096 Jun 15 10:30 <span class="directory">.</span><br>
+                    drwxr-xr-x 17 user user  4096 Jun 15 09:45 <span class="directory">..</span><br>
+                    -rw-r--r--  1 user user   220 Jun 15 10:20 <span class="file">.bashrc</span><br>
+                    drwxr-xr-x  2 user user  4096 Jun 15 10:25 <span class="directory">documents</span><br>
+                    drwxr-xr-x  2 user user  4096 Jun 15 10:26 <span class="directory">downloads</span><br>
+                    -rw-r--r--  1 user user  1234 Jun 15 10:30 <span class="file">example.txt</span><br>
+                    drwxr-xr-x  2 user user  4096 Jun 15 10:25 <span class="directory">projects</span>
+                `;
+                return;
+            }
+            
+            if (command === 'pwd') {
+                outputElement.innerHTML = `/home/user`;
+                return;
+            }
+            
+            if (command === 'whoami') {
+                outputElement.innerHTML = `user`;
+                return;
+            }
+            
+            if (command === 'date') {
+                outputElement.innerHTML = new Date().toString();
+                return;
+            }
+            
+            if (command.startsWith('echo ')) {
+                outputElement.textContent = cmd.substring(5);
+                return;
+            }
+            
+            if (command.startsWith('cat ')) {
+                const file = cmd.substring(4).trim();
+                if (file === 'example.txt') {
+                    outputElement.innerHTML = `This is the content of example.txt<br>You can use the cat command to display file contents`;
+                } else {
+                    outputElement.innerHTML = `<span class="error">cat: ${file}: No such file or directory</span>`;
+                }
+                return;
+            }
+            
+            if (cmd.trim() !== '') {
+                outputElement.innerHTML = `<span class="error">Command not found: ${cmd}</span>`;
+            }
+        }
+
+        function clearTerminal() {
+            const children = terminalOutput.children;
+            const length = children.length;
+            
+            // Remove all children except the last one (input line)
+            for (let i = length - 2; i >= 0; i--) {
+                terminalOutput.removeChild(children[i]);
+            }
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
