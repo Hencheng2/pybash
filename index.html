@@ -11,7 +11,8 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Fira Code', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
-            font-size: 13px;
+            font-size: 12px;
+            line-height: 1.3;
         }
 
         body {
@@ -35,7 +36,7 @@
 
         .terminal-header {
             background: #161b22;
-            padding: 10px 15px;
+            padding: 8px 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -44,12 +45,12 @@
 
         .terminal-controls {
             display: flex;
-            gap: 8px;
+            gap: 6px;
         }
 
         .control {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
         }
 
@@ -60,11 +61,11 @@
         .terminal-title {
             font-weight: 600;
             color: #f0f6fc;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         .terminal-body {
-            padding: 15px;
+            padding: 12px;
             height: 500px;
             overflow-y: auto;
             scrollbar-width: thin;
@@ -72,7 +73,7 @@
         }
 
         .terminal-body::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
 
         .terminal-body::-webkit-scrollbar-track {
@@ -81,34 +82,35 @@
 
         .terminal-body::-webkit-scrollbar-thumb {
             background: #30363d;
-            border-radius: 3px;
+            border-radius: 2px;
         }
 
         .prompt {
             color: #58a6ff;
-            margin-right: 6px;
+            margin-right: 5px;
             font-weight: bold;
+            white-space: nowrap;
         }
 
         .command-input {
             background: transparent;
             border: none;
             color: #f0f6fc;
-            font-size: 13px;
-            width: calc(100% - 100px);
+            font-size: 12px;
+            width: calc(100% - 90px);
             outline: none;
             caret-color: #58a6ff;
             resize: none;
-            padding: 3px 0;
-            min-height: 18px;
-            max-height: 120px;
+            padding: 2px 0;
+            min-height: 16px;
+            max-height: 100px;
             overflow-y: auto;
         }
 
         .input-line {
             display: flex;
             align-items: flex-start;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .user {
@@ -124,8 +126,7 @@
         }
 
         .output {
-            margin-bottom: 12px;
-            line-height: 1.4;
+            margin-bottom: 10px;
             white-space: pre-wrap;
         }
 
@@ -149,23 +150,27 @@
             color: #c9d1d9;
         }
 
+        .executable {
+            color: #a5d6ff;
+        }
+
         .command-block {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .multiline-indicator {
             color: #8b949e;
-            margin-right: 6px;
+            margin-right: 5px;
         }
 
         .help-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 8px 0;
+            margin: 6px 0;
         }
 
         .help-table td {
-            padding: 3px 8px;
+            padding: 2px 6px;
             border-bottom: 1px solid #21262d;
         }
 
@@ -180,24 +185,26 @@
 
         .terminal-footer {
             background: #161b22;
-            padding: 8px 15px;
+            padding: 6px 12px;
             border-top: 1px solid #30363d;
-            font-size: 11px;
+            font-size: 10px;
             color: #8b949e;
             display: flex;
             justify-content: space-between;
+            flex-wrap: wrap;
         }
 
         .shortcut {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
+            margin: 2px 0;
         }
 
         .shortcut-key {
             background: #30363d;
-            padding: 1px 4px;
-            border-radius: 3px;
+            padding: 1px 3px;
+            border-radius: 2px;
         }
 
         .ps1 {
@@ -211,36 +218,64 @@
         .cpu-info {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            margin: 8px 0;
+            gap: 6px;
+            margin: 6px 0;
         }
 
         .cpu-bar {
-            height: 8px;
+            height: 6px;
             background: #21262d;
-            border-radius: 4px;
+            border-radius: 3px;
             overflow: hidden;
-            margin: 4px 0;
+            margin: 3px 0;
         }
 
         .cpu-bar-fill {
             height: 100%;
             background: #3fb950;
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
         @media (max-width: 768px) {
             .terminal-footer {
                 flex-direction: column;
-                gap: 6px;
+                gap: 4px;
             }
             
             .terminal-body {
                 height: 400px;
+                padding: 8px;
             }
             
             .cpu-info {
                 grid-template-columns: 1fr;
+            }
+            
+            .prompt {
+                font-size: 11px;
+            }
+            
+            .command-input {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .terminal-header {
+                padding: 6px 8px;
+            }
+            
+            .terminal-body {
+                padding: 6px;
+                height: 350px;
+            }
+            
+            .terminal-footer {
+                padding: 4px 8px;
+            }
+            
+            .shortcut {
+                font-size: 9px;
             }
         }
     </style>
@@ -295,38 +330,44 @@
         let commandHistory = [];
         let historyIndex = -1;
         let isMultiline = false;
-        let currentDirectory = '~';
         
-        // All available commands
-        const availableCommands = [
-            'ls', 'dir', 'cd', 'pwd', 'mkdir', 'rmdir', 'rm', 'del', 'cp', 'copy', 'mv', 'move', 'ren', 'rename', 'touch',
-            'find', 'locate', 'ln', 'cat', 'type', 'less', 'more', 'nano', 'vim', 'vi', 'emacs', 'head', 'tail', 'grep',
-            'egrep', 'fgrep', 'awk', 'sed', 'cut', 'sort', 'uniq', 'wc', 'diff', 'cmp', 'comm', 'paste', 'whoami', 'uname',
-            'df', 'du', 'top', 'htop', 'free', 'uptime', 'vmstat', 'iostat', 'sar', 'ps', 'pstree', 'kill', 'killall',
-            'pkill', 'nice', 'renice', 'jobs', 'bg', 'fg', 'nohup', 'chmod', 'chown', 'chgrp', 'umask', 'ping', 'curl',
-            'wget', 'netstat', 'ifconfig', 'ip', 'ss', 'route', 'traceroute', 'tracert', 'nslookup', 'dig', 'host', 'ssh',
-            'scp', 'rsync', 'ftp', 'sftp', 'telnet', 'arp', 'whois', 'apt', 'apt-get', 'dpkg', 'yum', 'dnf', 'rpm', 'pacman',
-            'brew', 'snap', 'flatpak', 'echo', 'export', 'unset', 'alias', 'unalias', 'history', 'man', 'info', 'whatis',
-            'apropos', 'which', 'whereis', 'env', 'printenv', 'set', 'tar', 'gzip', 'gunzip', 'bzip2', 'bunzip2', 'xz',
-            'unxz', 'zip', 'unzip', 'rar', 'unrar', '7z', 'clear', 'reset', 'tput', 'sudo', 'su', 'passwd', 'chsh', 'date',
-            'cal', 'time', 'cron', 'crontab', 'at', 'reboot', 'shutdown', 'halt', 'poweroff', 'systemctl', 'service',
-            'journalctl', 'dmesg', 'lsblk', 'fdisk', 'parted', 'mkfs', 'mount', 'umount', 'fsck', 'dd', 'systeminfo', 'ver',
-            'wmic', 'tasklist', 'taskkill', 'schtasks', 'ipconfig', 'net', 'netsh', 'chkdsk', 'sfc', 'dism', 'Get-Process',
-            'Stop-Process', 'Get-Service', 'Start-Service', 'Stop-Service', 'Get-Content', 'Set-Content', 'New-Item',
-            'Remove-Item', 'Set-Location', 'Get-Location', 'Test-Path', 'Invoke-WebRequest', 'Start-Process', 'ConvertTo-Json',
-            'ConvertFrom-Json', 'tee', 'watch', 'sleep', 'basename', 'dirname', 'realpath', 'file', 'stat', 'md5sum',
-            'sha256sum', 'shasum', 'bc', 'expr', 'jq', 'xargs', 'tr', 'fold', 'column', 'yes', 'nl', 'seq', 'shuf', 'pr',
-            'ulimit', 'screen', 'tmux', 'bgzip', 'zcat', 'lscpu', 'lsusb', 'lspci', 'dmidecode', 'hostname', 'hostnamectl',
-            'locale', 'localectl', 'timedatectl', 'useradd', 'userdel', 'usermod', 'groupadd', 'groupdel', 'adduser',
-            'deluser', 'id', 'last', 'w', 'who', 'logname', 'logger', 'logrotate', 'wall', 'write', 'mesg', 'tty', 'stty',
-            'tsort', 'expand', 'unexpand', 'split', 'csplit', 'join', 'sc', 'lsof', 'strace', 'ltrace', 'nc', 'socat',
-            'nmap', 'iftop', 'iotop', 'pv', 'tree', 'arch', 'nproc', 'od', 'hexdump', 'strings', 'readlink', 'mktemp',
-            'flock', 'chroot', 'pivot_root', 'nsenter', 'unshare', 'dtrace', 'ktrace', 'perf', 'ethtool', 'iw', 'iwconfig',
-            'rfkill', 'modprobe', 'lsmod', 'insmod', 'rmmod', 'depmod', 'sysctl', 'ul', 'prtconf', 'prtdiag', 'getent',
-            'ntpdate', 'chronyc', 'hwclock', 'blkid', 'partprobe', 'tune2fs', 'badblocks', 'e2fsck', 'resize2fs', 'mkswap',
-            'swapon', 'swapoff', 'cryptsetup', 'losetup', 'mdadm', 'lvm', 'vgcreate', 'lvcreate', 'vgremove', 'lvremove',
-            'help'
-        ];
+        // File system simulation
+        let fileSystem = {
+            '~': {
+                type: 'directory',
+                content: {
+                    'documents': {
+                        type: 'directory',
+                        content: {
+                            'notes.txt': {
+                                type: 'file',
+                                content: 'Important notes\nProject ideas\nMeeting minutes'
+                            },
+                            'projects': {
+                                type: 'directory',
+                                content: {}
+                            }
+                        }
+                    },
+                    'downloads': {
+                        type: 'directory',
+                        content: {
+                            'archive.zip': {
+                                type: 'file',
+                                content: 'Zipped archive (binary content)'
+                            }
+                        }
+                    },
+                    'README.md': {
+                        type: 'file',
+                        content: '# Welcome to the Web Terminal\n\nThis is a simulated terminal experience in your browser.'
+                    }
+                }
+            }
+        };
+        
+        let currentDirectory = '~';
+        let currentPath = ['~'];
 
         // Focus the input on load
         commandInput.focus();
@@ -375,7 +416,7 @@
             // Clear command with Escape key
             if (e.key === 'Escape') {
                 this.value = '';
-                this.style.height = '18px';
+                this.style.height = '16px';
                 isMultiline = false;
             }
             
@@ -424,7 +465,7 @@
             
             commandBlock.innerHTML = `
                 <div>
-                    <span class="prompt"><span class="user">user</span>@<span class="host">terminal</span>:<span class="path">${currentDirectory}</span>$</span>
+                    <span class="prompt"><span class="user">user</span>@<span class="host">terminal</span>:<span class="path">${getCurrentPath()}</span>$</span>
                     ${formattedCommand}
                 </div>
             `;
@@ -442,11 +483,15 @@
             
             // Clear input and reset
             commandInput.value = '';
-            commandInput.style.height = '18px';
+            commandInput.style.height = '16px';
             isMultiline = false;
             
             // Scroll to bottom
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+
+        function getCurrentPath() {
+            return currentPath.join('/').replace('~/', '');
         }
 
         function processCommand(cmd, outputElement) {
@@ -461,22 +506,29 @@
             
             if (commandLower === 'help') {
                 outputElement.innerHTML = `
-                    <div class="info">Available commands (${availableCommands.length} total):</div>
-                    <div class="output">${availableCommands.join(', ')}</div>
-                    <div class="info">Type 'help [command]' for more information on a specific command.</div>
+                    <div class="info">Available commands:</div>
+                    <table class="help-table">
+                        <tr><td><span class="success">help</span></td><td>Show this help message</td></tr>
+                        <tr><td><span class="success">clear</span></td><td>Clear the terminal screen</td></tr>
+                        <tr><td><span class="success">ls [path]</span></td><td>List directory contents</td></tr>
+                        <tr><td><span class="success">pwd</span></td><td>Print working directory</td></tr>
+                        <tr><td><span class="success">whoami</span></td><td>Display current user</td></tr>
+                        <tr><td><span class="success">date</span></td><td>Show current date and time</td></tr>
+                        <tr><td><span class="success">echo [text]</span></td><td>Display a line of text</td></tr>
+                        <tr><td><span class="success">cat [file]</span></td><td>Display file content</td></tr>
+                        <tr><td><span class="success">cd [dir]</span></td><td>Change directory</td></tr>
+                        <tr><td><span class="success">mkdir [dir]</span></td><td>Create a directory</td></tr>
+                        <tr><td><span class="success">rmdir [dir]</span></td><td>Remove a directory</td></tr>
+                        <tr><td><span class="success">touch [file]</span></td><td>Create a file</td></tr>
+                        <tr><td><span class="success">rm [file]</span></td><td>Remove a file</td></tr>
+                    </table>
+                    <div class="info">You can also use multi-line commands for scripting</div>
                 `;
                 return;
             }
             
-            if (commandLower.startsWith('help ')) {
-                const helpCommand = commandLower.split(' ')[1];
-                outputElement.innerHTML = `<div class="info">Help for ${helpCommand}: This is a web-based terminal emulator. In a real system, this command would provide information about ${helpCommand}.</div>`;
-                return;
-            }
-            
-            // Handle basic commands with simple responses
             if (commandLower === 'pwd') {
-                outputElement.innerHTML = `/home/user${currentDirectory === '~' ? '' : currentDirectory}`;
+                outputElement.innerHTML = `/home/user/${getCurrentPath()}`;
                 return;
             }
             
@@ -490,115 +542,219 @@
                 return;
             }
             
-            if (commandLower === 'uname') {
-                outputElement.innerHTML = 'Linux terminal 5.15.0-76-generic #83-Ubuntu SMP Thu Jun 15 10:30:17 UTC 2023 x86_64 x86_64 x86_64 GNU/Linux';
-                return;
-            }
-            
-            if (commandLower === 'ls' || commandLower === 'dir') {
-                outputElement.innerHTML = `
-total 4<br>
-drwxr-xr-x  2 user user 4096 Jun 15 10:30 <span class="directory">documents</span><br>
-drwxr-xr-x  2 user user 4096 Jun 15 10:30 <span class="directory">downloads</span><br>
-drwxr-xr-x  2 user user 4096 Jun 15 10:30 <span class="directory">projects</span>
-                `;
-                return;
-            }
-            
-            if (commandLower.startsWith('cd ')) {
-                const dir = command.substring(3).trim();
-                if (dir === '..' && currentDirectory !== '~') {
-                    currentDirectory = '~';
-                } else if (dir === 'documents' || dir === 'downloads' || dir === 'projects') {
-                    currentDirectory = `~/${dir}`;
-                } else if (dir === '~') {
-                    currentDirectory = '~';
-                } else {
-                    outputElement.innerHTML = `<span class="error">bash: cd: ${dir}: No such file or directory</span>`;
-                }
-                return;
-            }
-            
-            if (commandLower === 'history') {
-                outputElement.innerHTML = commandHistory.map((cmd, i) => 
-                    `  ${i + 1}  ${cmd}`
-                ).join('<br>');
-                return;
-            }
-            
             if (commandLower.startsWith('echo ')) {
                 outputElement.textContent = command.substring(5);
                 return;
             }
             
+            if (commandLower.startsWith('cat ')) {
+                const file = command.substring(4).trim();
+                outputElement.innerHTML = catFile(file);
+                return;
+            }
+            
+            if (commandLower.startsWith('cd ')) {
+                const dir = command.substring(3).trim();
+                changeDirectory(dir, outputElement);
+                return;
+            }
+            
+            if (commandLower === 'cd') {
+                changeDirectory('~', outputElement);
+                return;
+            }
+            
             if (commandLower.startsWith('mkdir ')) {
                 const dir = command.substring(6).trim();
-                outputElement.innerHTML = `<span class="success">Created directory '${dir}'</span>`;
+                outputElement.innerHTML = makeDirectory(dir);
                 return;
             }
             
             if (commandLower.startsWith('rmdir ')) {
                 const dir = command.substring(6).trim();
-                outputElement.innerHTML = `<span class="success">Removed directory '${dir}'</span>`;
+                outputElement.innerHTML = removeDirectory(dir);
                 return;
             }
             
             if (commandLower.startsWith('touch ')) {
                 const file = command.substring(6).trim();
-                outputElement.innerHTML = `<span class="success">Created file '${file}'</span>`;
+                outputElement.innerHTML = touchFile(file);
                 return;
             }
             
-            if (commandLower.startsWith('rm ') || commandLower.startsWith('del ')) {
+            if (commandLower.startsWith('rm ')) {
                 const file = command.substring(3).trim();
-                outputElement.innerHTML = `<span class="success">Removed '${file}'</span>`;
+                outputElement.innerHTML = removeFile(file);
                 return;
             }
             
-            if (commandLower === 'ps') {
-                outputElement.innerHTML = `
-  PID TTY          TIME CMD
-    1 pts/0    00:00:00 bash
-   42 pts/0    00:00:00 node
-   87 pts/0    00:00:00 python
-  103 pts/0    00:00:00 ps
-                `;
+            if (commandLower === 'ls' || commandLower.startsWith('ls ')) {
+                const path = args[0] || '.';
+                outputElement.innerHTML = listDirectory(path);
                 return;
             }
             
-            if (commandLower === 'df') {
-                outputElement.innerHTML = `
-Filesystem      Size  Used Avail Use% Mounted on
-/dev/sda1        20G  7.2G   12G  39% /
-tmpfs           3.9G     0  3.9G   0% /dev/shm
-/dev/sdb1       100G   25G   75G  25% /home
-                `;
-                return;
-            }
-            
-            if (commandLower === 'free') {
-                outputElement.innerHTML = `
-              total        used        free      shared  buff/cache   available
-Mem:         7954208     2097152     2097152      524288     3760904     5046272
-Swap:        2097148           0     2097148
-                `;
-                return;
-            }
-            
-            if (commandLower === 'uptime') {
-                const uptime = "10:30:17 up 2 days,  3:15,  1 user,  load average: 0.05, 0.10, 0.15";
-                outputElement.innerHTML = uptime;
-                return;
-            }
-            
-            // For all other commands, show a generic response
             if (cmd.trim() !== '') {
-                const baseCommand = command.split(' ')[0];
-                if (availableCommands.includes(baseCommand)) {
-                    outputElement.innerHTML = `<div class="info">Command '${baseCommand}' executed successfully.</div>`;
+                outputElement.innerHTML = `<span class="error">Command not found: ${cmd}</span>`;
+            }
+        }
+
+        function getCurrentDirObject() {
+            let dir = fileSystem;
+            for (let i = 0; i < currentPath.length; i++) {
+                const part = currentPath[i];
+                if (part === '~') continue;
+                if (dir[part] && dir[part].type === 'directory') {
+                    dir = dir[part].content;
                 } else {
-                    outputElement.innerHTML = `<span class="error">Command not found: ${cmd}</span><div class="info">Type 'help' to see available commands.</div>`;
+                    return null;
                 }
+            }
+            return dir;
+        }
+
+        function listDirectory(path) {
+            if (path === '-la' || path === '-l' || path === '-a') {
+                path = '.';
+            }
+            
+            let targetDir = getCurrentDirObject();
+            if (path === '..') {
+                // Handle parent directory listing
+                if (currentPath.length > 1) {
+                    const parentPath = [...currentPath];
+                    parentPath.pop();
+                    
+                    let parentDir = fileSystem;
+                    for (let i = 0; i < parentPath.length; i++) {
+                        const part = parentPath[i];
+                        if (part === '~') continue;
+                        if (parentDir[part] && parentDir[part].type === 'directory') {
+                            parentDir = parentDir[part].content;
+                        }
+                    }
+                    
+                    return formatDirectoryListing(parentDir, true);
+                } else {
+                    return formatDirectoryListing(fileSystem, true);
+                }
+            } else if (path !== '.' && path !== './') {
+                // Handle specific path
+                if (targetDir[path] && targetDir[path].type === 'directory') {
+                    return formatDirectoryListing(targetDir[path].content, true);
+                } else {
+                    return `<span class="error">ls: cannot access '${path}': No such file or directory</span>`;
+                }
+            } else {
+                // Handle current directory
+                return formatDirectoryListing(targetDir, false);
+            }
+        }
+
+        function formatDirectoryListing(dir, showAll) {
+            if (!dir) return `<span class="error">Directory not found</span>`;
+            
+            let result = 'total ' + (Object.keys(dir).length * 4) + '<br>';
+            
+            // Always show . and ..
+            result += `drwxr-xr-x  2 user user 4096 Jun 15 10:30 <span class="directory">.</span><br>`;
+            result += `drwxr-xr-x  3 user user 4096 Jun 15 10:30 <span class="directory">..</span><br>`;
+            
+            for (const name in dir) {
+                const item = dir[name];
+                if (item.type === 'directory') {
+                    result += `drwxr-xr-x  2 user user 4096 Jun 15 10:30 <span class="directory">${name}</span><br>`;
+                } else {
+                    result += `-rw-r--r--  1 user user ${item.content.length} Jun 15 10:30 <span class="file">${name}</span><br>`;
+                }
+            }
+            
+            return result;
+        }
+
+        function catFile(filename) {
+            const currentDir = getCurrentDirObject();
+            if (currentDir && currentDir[filename] && currentDir[filename].type === 'file') {
+                return escapeHtml(currentDir[filename].content);
+            } else {
+                return `<span class="error">cat: ${filename}: No such file or directory</span>`;
+            }
+        }
+
+        function changeDirectory(dir, outputElement) {
+            if (dir === '~') {
+                currentPath = ['~'];
+                return;
+            }
+            
+            if (dir === '..') {
+                if (currentPath.length > 1) {
+                    currentPath.pop();
+                }
+                return;
+            }
+            
+            const currentDir = getCurrentDirObject();
+            if (currentDir && currentDir[dir] && currentDir[dir].type === 'directory') {
+                currentPath.push(dir);
+            } else {
+                outputElement.innerHTML = `<span class="error">bash: cd: ${dir}: No such file or directory</span>`;
+            }
+        }
+
+        function makeDirectory(dir) {
+            const currentDir = getCurrentDirObject();
+            if (currentDir) {
+                if (currentDir[dir]) {
+                    return `<span class="error">mkdir: cannot create directory '${dir}': File exists</span>`;
+                } else {
+                    currentDir[dir] = {
+                        type: 'directory',
+                        content: {}
+                    };
+                    return `<span class="success">Directory '${dir}' created successfully</span>`;
+                }
+            }
+            return `<span class="error">mkdir: cannot create directory '${dir}': No such file or directory</span>`;
+        }
+
+        function removeDirectory(dir) {
+            const currentDir = getCurrentDirObject();
+            if (currentDir && currentDir[dir] && currentDir[dir].type === 'directory') {
+                if (Object.keys(currentDir[dir].content).length === 0) {
+                    delete currentDir[dir];
+                    return `<span class="success">Directory '${dir}' removed successfully</span>`;
+                } else {
+                    return `<span class="error">rmdir: failed to remove '${dir}': Directory not empty</span>`;
+                }
+            } else {
+                return `<span class="error">rmdir: failed to remove '${dir}': No such file or directory</span>`;
+            }
+        }
+
+        function touchFile(file) {
+            const currentDir = getCurrentDirObject();
+            if (currentDir) {
+                if (currentDir[file]) {
+                    return `<span class="error">touch: cannot create file '${file}': File exists</span>`;
+                } else {
+                    currentDir[file] = {
+                        type: 'file',
+                        content: ''
+                    };
+                    return `<span class="success">File '${file}' created successfully</span>`;
+                }
+            }
+            return `<span class="error">touch: cannot create file '${file}': No such file or directory</span>`;
+        }
+
+        function removeFile(file) {
+            const currentDir = getCurrentDirObject();
+            if (currentDir && currentDir[file] && currentDir[file].type === 'file') {
+                delete currentDir[file];
+                return `<span class="success">File '${file}' removed successfully</span>`;
+            } else {
+                return `<span class="error">rm: cannot remove '${file}': No such file or directory</span>`;
             }
         }
 
@@ -622,25 +778,22 @@ Swap:        2097148           0     2097148
         }
 
         function autoComplete() {
+            // Simple autocomplete implementation
             const input = commandInput.value;
-            const tokens = input.split(' ');
-            const lastToken = tokens[tokens.length - 1];
+            const commands = ['ls', 'cd', 'cat', 'echo', 'pwd', 'whoami', 'date', 'clear', 'help', 'mkdir', 'touch', 'rm', 'rmdir'];
             
-            if (tokens.length === 1) {
-                // Command completion
-                const matching = availableCommands.filter(cmd => cmd.startsWith(lastToken));
-                
-                if (matching.length === 1) {
-                    commandInput.value = matching[0] + ' ';
-                    adjustTextareaHeight();
-                } else if (matching.length > 1) {
-                    // Display possibilities
-                    const outputElement = document.createElement('div');
-                    outputElement.className = 'output';
-                    outputElement.innerHTML = matching.join('  ');
-                    terminalOutput.insertBefore(outputElement, terminalOutput.lastElementChild);
-                    terminalOutput.scrollTop = terminalOutput.scrollHeight;
-                }
+            const matching = commands.filter(cmd => cmd.startsWith(input));
+            
+            if (matching.length === 1) {
+                commandInput.value = matching[0] + ' ';
+                adjustTextareaHeight();
+            } else if (matching.length > 1) {
+                // Display possibilities
+                const outputElement = document.createElement('div');
+                outputElement.className = 'output';
+                outputElement.innerHTML = matching.join('  ');
+                terminalOutput.insertBefore(outputElement, terminalOutput.lastElementChild);
+                terminalOutput.scrollTop = terminalOutput.scrollHeight;
             }
         }
     </script>
