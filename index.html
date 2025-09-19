@@ -3,787 +3,549 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Web Terminal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Web Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Fira Code', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
-        }
-
-        body {
-            background: #0a0e14;
-            color: #e6e6e6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .terminal-container {
-            width: 100%;
-            max-width: 900px;
-            background: #0d1117;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .terminal-header {
-            background: #161b22;
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #30363d;
-        }
-
-        .terminal-controls {
-            display: flex;
-            gap: 10px;
-        }
-
-        .control {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-        }
-
-        .close { background: #ff5f56; }
-        .minimize { background: #ffbd2e; }
-        .maximize { background: #27c93f; }
-
-        .terminal-title {
-            font-weight: 600;
-            color: #f0f6fc;
-            font-size: 14px;
-        }
-
-        .terminal-body {
-            padding: 20px;
-            height: 500px;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #30363d #0a0e14;
-        }
-
-        .terminal-body::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .terminal-body::-webkit-scrollbar-track {
-            background: #0a0e14;
-        }
-
-        .terminal-body::-webkit-scrollbar-thumb {
-            background: #30363d;
-            border-radius: 4px;
-        }
-
-        .prompt {
-            color: #58a6ff;
-            margin-right: 8px;
-            font-weight: bold;
-        }
-
-        .command-input {
-            background: transparent;
-            border: none;
-            color: #f0f6fc;
-            font-size: 16px;
-            width: calc(100% - 120px);
-            outline: none;
-            caret-color: #58a6ff;
-            resize: none;
-            padding: 5px 0;
-            min-height: 24px;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-
-        .input-line {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 10px;
-        }
-
-        .user {
-            color: #3fb950;
-        }
-
-        .host {
-            color: #a5d6ff;
-        }
-
-        .path {
-            color: #e3b341;
-        }
-
-        .output {
-            margin-bottom: 15px;
-            line-height: 1.5;
+        #terminal {
+            font-family: 'Fira Code', monospace;
             white-space: pre-wrap;
+            word-wrap: break-word;
         }
-
-        .success {
-            color: #3fb950;
-        }
-
-        .error {
-            color: #ff7b72;
-        }
-
-        .info {
-            color: #79c0ff;
-        }
-
-        .directory {
-            color: #d2a8ff;
-        }
-
-        .file {
-            color: #c9d1d9;
-        }
-
-        .command-block {
-            margin-bottom: 15px;
-        }
-
-        .multiline-indicator {
-            color: #8b949e;
-            margin-right: 8px;
-        }
-
-        .help-table {
+        #terminal-input {
+            outline: none;
+            background: none;
+            border: none;
+            color: #e5e7eb;
             width: 100%;
-            border-collapse: collapse;
-            margin: 10px 0;
         }
-
-        .help-table td {
-            padding: 5px 10px;
-            border-bottom: 1px solid #21262d;
+        .command-output {
+            margin-bottom: 0.5rem;
         }
-
-        .help-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .key-combo {
-            color: #ff7b72;
-            font-weight: bold;
-        }
-
-        .terminal-footer {
-            background: #161b22;
-            padding: 12px 20px;
-            border-top: 1px solid #30363d;
-            font-size: 13px;
-            color: #8b949e;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .shortcut {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .shortcut-key {
-            background: #30363d;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .ps1 {
-            color: #7ee787;
-        }
-
-        .ps2 {
-            color: #ffa657;
-        }
-
-        .cpu-info {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin: 10px 0;
-        }
-
-        .cpu-bar {
-            height: 10px;
-            background: #21262d;
-            border-radius: 5px;
-            overflow: hidden;
-            margin: 5px 0;
-        }
-
-        .cpu-bar-fill {
-            height: 100%;
-            background: #3fb950;
-            border-radius: 5px;
-        }
-
-        @media (max-width: 768px) {
-            .terminal-footer {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .terminal-body {
-                height: 400px;
-            }
-            
-            .cpu-info {
-                grid-template-columns: 1fr;
-            }
+        .terminal-prompt::before {
+            content: '$ ';
+            color: #10b981;
         }
     </style>
 </head>
-<body>
-    <div class="terminal-container">
-        <div class="terminal-header">
-            <div class="terminal-controls">
-                <div class="control close"></div>
-                <div class="control minimize"></div>
-                <div class="control maximize"></div>
-            </div>
-            <div class="terminal-title">bash — Modern Web Terminal</div>
-            <div></div>
-        </div>
-        
-        <div class="terminal-body" id="terminalOutput">
-            <div class="output info">Welcome to Modern Web Terminal v1.2.0</div>
-            <div class="output info">Type 'help' to see available commands, 'clear' to clear the screen</div>
-            <div class="output info">Use Shift+Enter for multi-line input. Press Enter to execute.</div>
-            <div class="output"><br></div>
-            
-            <!-- Initial command to show -->
-            <div class="command-block">
-                <div>
-                    <span class="prompt"><span class="user">user</span>@<span class="host">web-terminal</span>:<span class="path">~</span>$</span>
-                    <span>ls -la</span>
-                </div>
-                <div class="output">
-                    total 32<br>
-                    drwxr-xr-x  5 user user  4096 Jun 15 10:30 <span class="directory">.</span><br>
-                    drwxr-xr-x 17 user user  4096 Jun 15 09:45 <span class="directory">..</span><br>
-                    -rw-r--r--  1 user user   220 Jun 15 10:20 <span class="file">.bashrc</span><br>
-                    drwxr-xr-x  2 user user  4096 Jun 15 10:25 <span class="directory">documents</span><br>
-                    drwxr-xr-x  2 user user  4096 Jun 15 10:26 <span class="directory">downloads</span><br>
-                    -rw-r--r--  1 user user  1234 Jun 15 10:30 <span class="file">example.txt</span><br>
-                    drwxr-xr-x  2 user user  4096 Jun 15 10:25 <span class="directory">projects</span>
-                </div>
-            </div>
-            
-            <div class="input-line">
-                <span class="prompt"><span class="user">user</span>@<span class="host">web-terminal</span>:<span class="path">~</span>$</span>
-                <textarea class="command-input" id="commandInput" rows="1" placeholder="Type your command here..." autofocus></textarea>
+<body class="bg-gray-900 text-gray-100 flex flex-col h-screen">
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Terminal Section -->
+        <div class="w-3/4 p-4 overflow-auto">
+            <div id="terminal" class="bg-gray-800 p-4 rounded-lg shadow-lg h-full"></div>
+            <div class="mt-2 terminal-prompt">
+                <input id="terminal-input" type="text" class="text-gray-100" autofocus>
             </div>
         </div>
-        
-        <div class="terminal-footer">
-            <div class="shortcut">
-                <i class="fas fa-code-branch"></i>
-                <span>main</span>
-            </div>
-            <div class="shortcut">
-                <i class="fas fa-keyboard"></i>
-                <span>Press <span class="shortcut-key">Enter</span> to execute</span>
-            </div>
-            <div class="shortcut">
-                <i class="fas fa-keyboard"></i>
-                <span>Press <span class="shortcut-key">Shift+Enter</span> for new line</span>
-            </div>
-            <div class="shortcut">
-                <i class="fas fa-terminal"></i>
-                <span>bash</span>
-            </div>
+        <!-- Help Section -->
+        <div class="w-1/4 p-4 bg-gray-800 overflow-auto">
+            <h2 class="text-xl font-bold mb-4 text-green-400">Command Help</h2>
+            <div id="help-content" class="text-sm"></div>
         </div>
     </div>
 
     <script>
-        const terminalOutput = document.getElementById('terminalOutput');
-        const commandInput = document.getElementById('commandInput');
-        let commandHistory = [];
-        let historyIndex = -1;
-        let isMultiline = false;
-        let currentDirectory = '~';
-        let fileSystem = {
-            '~': {
-                '.bashrc': 'export PATH=$PATH:/usr/local/bin\nexport EDITOR=nano',
-                'example.txt': 'This is the content of example.txt\nYou can use the cat command to display file contents',
-                'README.md': '# Welcome to the Web Terminal\n\nThis is a simulated terminal experience in your browser.',
-                'documents': {
-                    'report.pdf': 'PDF document (simulated)',
-                    'notes.txt': 'Important notes here'
-                },
-                'downloads': {
-                    'package.zip': 'Zipped archive (simulated)'
-                },
-                'projects': {
-                    'web-terminal': {
-                        'index.html': 'HTML file for the terminal',
-                        'style.css': 'CSS styles for the terminal',
-                        'script.js': 'JavaScript functionality'
-                    }
-                }
+        // File system simulation
+        class FileSystem {
+            constructor() {
+                this.root = { '/': { type: 'dir', children: {} } };
+                this.currentPath = '/';
             }
+
+            getCurrentDir() {
+                return this.getNode(this.currentPath);
+            }
+
+            getNode(path) {
+                const parts = path.split('/').filter(p => p);
+                let node = this.root['/'];
+                for (const part of parts) {
+                    if (!node.children[part] || node.type !== 'dir') return null;
+                    node = node.children[part];
+                }
+                return node;
+            }
+
+            resolvePath(path) {
+                if (path.startsWith('/')) return path;
+                return this.currentPath === '/' ? `/${path}` : `${this.currentPath}/${path}`;
+            }
+        }
+
+        // Command implementations
+        const commands = {
+            ls: (fs, args) => dir(fs, args),
+            dir: (fs, args) => {
+                const node = fs.getCurrentDir();
+                return node ? Object.keys(node.children).join('\n') : 'dir: directory not found';
+            },
+            cd: (fs, args) => {
+                const path = args[0] ? fs.resolvePath(args[0]) : '/';
+                const node = fs.getNode(path);
+                if (node && node.type === 'dir') {
+                    fs.currentPath = path;
+                    return '';
+                }
+                return `cd: ${path}: No such directory`;
+            },
+            pwd: (fs) => fs.currentPath,
+            mkdir: (fs, args) => {
+                if (!args[0]) return 'mkdir: missing operand';
+                const path = fs.resolvePath(args[0]);
+                const parentPath = path.substring(0, path.lastIndexOf('/'));
+                const name = path.split('/').pop();
+                const parent = fs.getNode(parentPath || '/');
+                if (!parent) return `mkdir: ${parentPath}: No such directory`;
+                if (parent.children[name]) return `mkdir: ${name}: Already exists`;
+                parent.children[name] = { type: 'dir', children: {} };
+                return '';
+            },
+            rmdir: (fs, args) => {
+                if (!args[0]) return 'rmdir: missing operand';
+                const path = fs.resolvePath(args[0]);
+                const parentPath = path.substring(0, path.lastIndexOf('/'));
+                const name = path.split('/').pop();
+                const parent = fs.getNode(parentPath || '/');
+                if (!parent || !parent.children[name]) return `rmdir: ${path}: No such directory`;
+                if (Object.keys(parent.children[name].children).length > 0) return `rmdir: ${path}: Directory not empty`;
+                delete parent.children[name];
+                return '';
+            },
+            rm: (fs, args) => {
+                if (!args[0]) return 'rm: missing operand';
+                const path = fs.resolvePath(args[0]);
+                const parentPath = path.substring(0, path.lastIndexOf('/'));
+                const name = path.split('/').pop();
+                const parent = fs.getNode(parentPath || '/');
+                if (!parent || !parent.children[name]) return `rm: ${path}: No such file or directory`;
+                delete parent.children[name];
+                return '';
+            },
+            del: (fs, args) => rm(fs, args),
+            cp: (fs, args) => {
+                if (args.length < 2) return 'cp: missing source and destination';
+                const src = fs.resolvePath(args[0]);
+                const dest = fs.resolvePath(args[1]);
+                const srcNode = fs.getNode(src);
+                if (!srcNode) return `cp: ${src}: No such file or directory`;
+                const destParentPath = dest.substring(0, dest.lastIndexOf('/'));
+                const destName = dest.split('/').pop();
+                const destParent = fs.getNode(destParentPath || '/');
+                if (!destParent) return `cp: ${destParentPath}: No such directory`;
+                destParent.children[destName] = JSON.parse(JSON.stringify(srcNode));
+                return '';
+            },
+            copy: (fs, args) => cp(fs, args),
+            mv: (fs, args) => {
+                if (args.length < 2) return 'mv: missing source and destination';
+                const src = fs.resolvePath(args[0]);
+                const dest = fs.resolvePath(args[1]);
+                const srcNode = fs.getNode(src);
+                if (!srcNode) return `mv: ${src}: No such file or directory`;
+                const destParentPath = dest.substring(0, dest.lastIndexOf('/'));
+                const destName = dest.split('/').pop();
+                const destParent = fs.getNode(destParentPath || '/');
+                if (!destParent) return `mv: ${destParentPath}: No such directory`;
+                destParent.children[destName] = srcNode;
+                const srcParentPath = src.substring(0, src.lastIndexOf('/'));
+                const srcName = src.split('/').pop();
+                const srcParent = fs.getNode(srcParentPath || '/');
+                delete srcParent.children[srcName];
+                return '';
+            },
+            move: (fs, args) => mv(fs, args),
+            ren: (fs, args) => mv(fs, args),
+            rename: (fs, args) => mv(fs, args),
+            touch: (fs, args) => {
+                if (!args[0]) return 'touch: missing operand';
+                const path = fs.resolvePath(args[0]);
+                const parentPath = path.substring(0, path.lastIndexOf('/'));
+                const name = path.split('/').pop();
+                const parent = fs.getNode(parentPath || '/');
+                if (!parent) return `touch: ${parentPath}: No such directory`;
+                if (!parent.children[name]) parent.children[name] = { type: 'file', content: '' };
+                return '';
+            },
+            // Add more command implementations here (simplified for brevity)
+            cat: (fs, args) => {
+                if (!args[0]) return 'cat: missing operand';
+                const path = fs.resolvePath(args[0]);
+                const node = fs.getNode(path);
+                if (!node || node.type !== 'file') return `cat: ${path}: No such file or not a file`;
+                return node.content || '';
+            },
+            // Placeholder for other commands
+            ...Object.fromEntries([
+                'find', 'locate', 'ln', 'type', 'less', 'more', 'nano', 'vim', 'vi', 'emacs',
+                'head', 'tail', 'grep', 'egrep', 'fgrep', 'awk', 'sed', 'cut', 'sort', 'uniq',
+                'wc', 'diff', 'cmp', 'comm', 'paste', 'whoami', 'uname', 'df', 'du', 'top',
+                'htop', 'free', 'uptime', 'vmstat', 'iostat', 'sar', 'ps', 'pstree', 'kill',
+                'killall', 'pkill', 'nice', 'renice', 'jobs', 'bg', 'fg', 'nohup', 'chmod',
+                'chown', 'chgrp', 'umask', 'ping', 'curl', 'wget', 'netstat', 'ifconfig',
+                'ip', 'ss', 'route', 'traceroute', 'tracert', 'nslookup', 'dig', 'host',
+                'ssh', 'scp', 'rsync', 'ftp', 'sftp', 'telnet', 'arp', 'whois', 'apt',
+                'apt-get', 'dpkg', 'yum', 'dnf', 'rpm', 'pacman', 'brew', 'snap', 'flatpak',
+                'echo', 'export', 'unset', 'alias', 'unalias', 'history', 'man', 'info',
+                'whatis', 'apropos', 'which', 'whereis', 'env', 'printenv', 'set', 'tar',
+                'gzip', 'gunzip', 'bzip2', 'bunzip2', 'xz', 'unxz', 'zip', 'unzip', 'rar',
+                'unrar', '7z', 'clear', 'reset', 'tput', 'sudo', 'su', 'passwd', 'chsh',
+                'date', 'cal', 'time', 'cron', 'crontab', 'at', 'reboot', 'shutdown',
+                'halt', 'poweroff', 'systemctl', 'service', 'journalctl', 'dmesg', 'lsblk',
+                'fdisk', 'parted', 'mkfs', 'mount', 'umount', 'fsck', 'dd', 'systeminfo',
+                'ver', 'wmic', 'tasklist', 'taskkill', 'schtasks', 'ipconfig', 'net',
+                'netsh', 'chkdsk', 'sfc', 'dism', 'Get-Process', 'Stop-Process',
+                'Get-Service', 'Start-Service', 'Stop-Service', 'Get-Content', 'Set-Content',
+                'New-Item', 'Remove-Item', 'Set-Location', 'Get-Location', 'Test-Path',
+                'Invoke-WebRequest', 'Start-Process', 'ConvertTo-Json', 'ConvertFrom-Json',
+                'tee', 'watch', 'sleep', 'basename', 'dirname', 'realpath', 'file', 'stat',
+                'md5sum', 'sha256sum', 'shasum', 'bc', 'expr', 'jq', 'xargs', 'tr', 'fold',
+                'column', 'yes', 'nl', 'seq', 'shuf', 'pr', 'ulimit', 'screen', 'tmux',
+                'bgzip', 'zcat', 'lscpu', 'lsusb', 'lspci', 'dmidecode', 'hostname',
+                'hostnamectl', 'locale', 'localectl', 'timedatectl', 'useradd', 'userdel',
+                'usermod', 'groupadd', 'groupdel', 'adduser', 'deluser', 'id', 'last',
+                'w', 'who', 'logname', 'logger', 'logrotate', 'wall', 'write', 'mesg',
+                'tty', 'stty', 'tsort', 'expand', 'unexpand', 'split', 'csplit', 'join',
+                'sc', 'lsof', 'strace', 'ltrace', 'nc', 'socat', 'nmap', 'iftop', 'iotop',
+                'pv', 'tree', 'arch', 'nproc', 'od', 'hexdump', 'strings', 'readlink',
+                'mktemp', 'flock', 'chroot', 'pivot_root', 'nsenter', 'unshare', 'dtrace',
+                'ktrace', 'perf', 'ethtool', 'iw', 'iwconfig', 'rfkill', 'modprobe',
+                'lsmod', 'insmod', 'rmmod', 'depmod', 'sysctl', 'ul', 'prtconf', 'prtdiag',
+                'getent', 'ntpdate', 'chronyc', 'hwclock', 'blkid', 'partprobe', 'tune2fs',
+                'badblocks', 'e2fsck', 'resize2fs', 'mkswap', 'swapon', 'swapoff',
+                'cryptsetup', 'losetup', 'mdadm', 'lvm', 'vgcreate', 'lvcreate', 'vgremove',
+                'lvremove'
+            ].map(cmd => [cmd, (fs, args) => `${cmd}: not implemented in this demo`]))
         };
 
-        // Focus the input on load
-        commandInput.focus();
+        // Command help descriptions
+        const commandHelp = {
+            ls: 'List directory contents',
+            dir: 'List directory contents (alias for ls)',
+            cd: 'Change the current directory',
+            pwd: 'Print working directory',
+            mkdir: 'Create a new directory',
+            rmdir: 'Remove an empty directory',
+            rm: 'Remove files or directories',
+            del: 'Remove files (alias for rm)',
+            cp: 'Copy files or directories',
+            copy: 'Copy files or directories (alias for cp)',
+            mv: 'Move or rename files or directories',
+            move: 'Move or rename files or directories (alias for mv)',
+            ren: 'Rename files or directories (alias for mv)',
+            rename: 'Rename files or directories (alias for mv)',
+            touch: 'Create an empty file or update file timestamps',
+            find: 'Search for files in a directory hierarchy',
+            locate: 'Find files by name using a database',
+            ln: 'Create hard or symbolic links',
+            cat: 'Concatenate and display file contents',
+            type: 'Display file contents (Windows equivalent of cat)',
+            less: 'View file contents page by page',
+            more: 'View file contents page by page (similar to less)',
+            nano: 'Text editor',
+            vim: 'Advanced text editor',
+            vi: 'Text editor (simplified vim)',
+            emacs: 'Extensible text editor',
+            head: 'Display the first lines of a file',
+            tail: 'Display the last lines of a file',
+            grep: 'Search text using patterns',
+            egrep: 'Extended grep with additional regex features',
+            fgrep: 'Fast grep, literal string matching',
+            awk: 'Pattern scanning and processing language',
+            sed: 'Stream editor for filtering and transforming text',
+            cut: 'Extract sections from each line of input',
+            sort: 'Sort lines of text files',
+            uniq: 'Remove duplicate lines from sorted input',
+            wc: 'Count words, lines, and characters',
+            diff: 'Compare files line by line',
+            cmp: 'Compare two files byte by byte',
+            comm: 'Compare two sorted files line by line',
+            paste: 'Merge lines of files',
+            whoami: 'Display the current user',
+            uname: 'Print system information',
+            df: 'Report file system disk space usage',
+            du: 'Estimate file space usage',
+            top: 'Display system processes',
+            htop: 'Interactive process viewer',
+            free: 'Display memory usage',
+            uptime: 'Show system uptime',
+            vmstat: 'Report virtual memory statistics',
+            iostat: 'Report CPU and I/O statistics',
+            sar: 'Collect and report system activity',
+            ps: 'Display process status',
+            pstree: 'Display processes as a tree',
+            kill: 'Terminate processes by PID',
+            killall: 'Terminate processes by name',
+            pkill: 'Terminate processes by name (similar to killall)',
+            nice: 'Run a command with modified priority',
+            renice: 'Alter priority of running processes',
+            jobs: 'List active jobs',
+            bg: 'Run a job in the background',
+            fg: 'Bring a job to the foreground',
+            nohup: 'Run a command immune to hangups',
+            chmod: 'Change file permissions',
+            chown: 'Change file ownership',
+            chgrp: 'Change file group ownership',
+            umask: 'Set default file permission mask',
+            ping: 'Test network connectivity',
+            curl: 'Transfer data from or to a server',
+            wget: 'Download files from the web',
+            netstat: 'Display network connections',
+            ifconfig: 'Configure network interfaces',
+            ip: 'Manage network interfaces and routing',
+            ss: 'Display socket statistics',
+            route: 'Display or manipulate routing table',
+            traceroute: 'Trace network route to a host',
+            tracert: 'Trace network route (Windows equivalent of traceroute)',
+            nslookup: 'Query DNS for domain information',
+            dig: 'DNS lookup utility',
+            host: 'DNS lookup utility (simpler than dig)',
+            ssh: 'Secure shell for remote login',
+            scp: 'Securely copy files over SSH',
+            rsync: 'Synchronize files and directories',
+            ftp: 'File Transfer Protocol client',
+            sftp: 'Secure File Transfer Protocol client',
+            telnet: 'Connect to remote hosts',
+            arp: 'Display or modify ARP cache',
+            whois: 'Query WHOIS database for domain information',
+            apt: 'Package management for Debian-based systems',
+            'apt-get': 'Advanced package management for Debian',
+            dpkg: 'Debian package management tool',
+            yum: 'Package manager for RPM-based systems',
+            dnf: 'Next-generation RPM package manager',
+            rpm: 'RPM package manager',
+            pacman: 'Package manager for Arch Linux',
+            brew: 'Package manager for macOS',
+            snap: 'Package manager for universal Linux packages',
+            flatpak: 'Package manager for universal Linux applications',
+            echo: 'Display a line of text',
+            export: 'Set environment variables',
+            unset: 'Remove environment variables',
+            alias: 'Create command aliases',
+            unalias: 'Remove command aliases',
+            history: 'Display command history',
+            man: 'Display manual pages',
+            info: 'Display GNU info pages',
+            whatis: 'Display one-line manual page descriptions',
+            apropos: 'Search manual pages for keywords',
+            which: 'Locate a command',
+            whereis: 'Locate binary, source, and manual pages',
+            env: 'Display environment variables',
+            printenv: 'Print specific environment variables',
+            set: 'Set shell variables',
+            tar: 'Archive files',
+            gzip: 'Compress files using GZIP',
+            gunzip: 'Decompress GZIP files',
+            bzip2: 'Compress files using BZIP2',
+            bunzip2: 'Decompress BZIP2 files',
+            xz: 'Compress files using XZ',
+            unxz: 'Decompress XZ files',
+            zip: 'Compress files into ZIP archives',
+            unzip: 'Extract ZIP archives',
+            rar: 'Compress files into RAR archives',
+            unrar: 'Extract RAR archives',
+            '7z': 'Compress and extract 7z archives',
+            clear: 'Clear the terminal screen',
+            reset: 'Reset the terminal state',
+            tput: 'Modify terminal settings',
+            sudo: 'Execute a command as another user',
+            su: 'Switch user',
+            passwd: 'Change user password',
+            chsh: 'Change login shell',
+            date: 'Display or set system date and time',
+            cal: 'Display a calendar',
+            time: 'Measure command execution time',
+            cron: 'Schedule tasks',
+            crontab: 'Manage cron jobs',
+            at: 'Schedule one-time tasks',
+            reboot: 'Reboot the system',
+            shutdown: 'Shut down the system',
+            halt: 'Halt the system',
+            poweroff: 'Power off the system',
+            systemctl: 'Manage systemd services',
+            service: 'Manage system services',
+            journalctl: 'View system logs',
+            dmesg: 'Display kernel messages',
+            lsblk: 'List block devices',
+            fdisk: 'Manipulate disk partition table',
+            parted: 'Partition management tool',
+            mkfs: 'Create a filesystem',
+            mount: 'Mount a filesystem',
+            umount: 'Unmount a filesystem',
+            fsck: 'Check and repair a filesystem',
+            dd: 'Convert and copy files',
+            systeminfo: 'Display system information (Windows)',
+            ver: 'Display system version (Windows)',
+            wmic: 'Windows Management Instrumentation Command',
+            tasklist: 'List running processes (Windows)',
+            taskkill: 'Terminate processes (Windows)',
+            schtasks: 'Schedule tasks (Windows)',
+            ipconfig: 'Display IP configuration (Windows)',
+            net: 'Manage network resources (Windows)',
+            netsh: 'Configure network settings (Windows)',
+            chkdsk: 'Check disk for errors (Windows)',
+            sfc: 'System File Checker (Windows)',
+            dism: 'Deployment Image Servicing and Management (Windows)',
+            'Get-Process': 'List processes (PowerShell)',
+            'Stop-Process': 'Terminate processes (PowerShell)',
+            'Get-Service': 'List services (PowerShell)',
+            'Start-Service': 'Start a service (PowerShell)',
+            'Stop-Service': 'Stop a service (PowerShell)',
+            'Get-Content': 'Read file contents (PowerShell)',
+            'Set-Content': 'Write to a file (PowerShell)',
+            'New-Item': 'Create files or directories (PowerShell)',
+            'Remove-Item': 'Delete files or directories (PowerShell)',
+            'Set-Location': 'Change directory (PowerShell)',
+            'Get-Location': 'Get current directory (PowerShell)',
+            'Test-Path': 'Check if a path exists (PowerShell)',
+            'Invoke-WebRequest': 'Perform HTTP requests (PowerShell)',
+            'Start-Process': 'Start a process (PowerShell)',
+            'ConvertTo-Json': 'Convert to JSON (PowerShell)',
+            'ConvertFrom-Json': 'Convert from JSON (PowerShell)',
+            tee: 'Redirect output to multiple destinations',
+            watch: 'Execute a command repeatedly',
+            sleep: 'Pause execution for a specified time',
+            basename: 'Strip directory and suffix from filenames',
+            dirname: 'Strip filename from path',
+            realpath: 'Resolve absolute pathname',
+            file: 'Determine file type',
+            stat: 'Display file or filesystem status',
+            md5sum: 'Compute MD5 checksum',
+            sha256sum: 'Compute SHA256 checksum',
+            shasum: 'Compute SHA checksums',
+            bc: 'Arbitrary-precision calculator',
+            expr: 'Evaluate expressions',
+            jq: 'Process JSON data',
+            xargs: 'Build and execute command lines from input',
+            tr: 'Translate or delete characters',
+            fold: 'Wrap text to a specified width',
+            column: 'Format output in columns',
+            yes: 'Output a string repeatedly',
+            nl: 'Number lines of files',
+            seq: 'Generate a sequence of numbers',
+            shuf: 'Shuffle input lines',
+            pr: 'Format for printing',
+            ulimit: 'Set or report user resource limits',
+            screen: 'Terminal multiplexer',
+            tmux: 'Terminal multiplexer',
+            bgzip: 'Compress files for tabix indexing',
+            zcat: 'Display compressed files',
+            lscpu: 'Display CPU information',
+            lsusb: 'List USB devices',
+            lspci: 'List PCI devices',
+            dmidecode: 'Display hardware information',
+            hostname: 'Display or set system hostname',
+            hostnamectl: 'Control system hostname',
+            locale: 'Display locale settings',
+            localectl: 'Control system locale',
+            timedatectl: 'Control system time and date',
+            useradd: 'Add a new user',
+            userdel: 'Delete a user',
+            usermod: 'Modify a user account',
+            groupadd: 'Add a new group',
+            groupdel: 'Delete a group',
+            adduser: 'Add a user (interactive)',
+            deluser: 'Delete a user (interactive)',
+            id: 'Display user and group information',
+            last: 'Show recent logins',
+            w: 'Show who is logged in',
+            who: 'Show who is logged in',
+            logname: 'Print login name',
+            logger: 'Log messages to system log',
+            logrotate: 'Rotate log files',
+            wall: 'Send message to all users',
+            write: 'Send message to a user',
+            mesg: 'Control write access to terminal',
+            tty: 'Print terminal name',
+            stty: 'Set terminal settings',
+            tsort: 'Perform topological sort',
+            expand: 'Convert tabs to spaces',
+            unexpand: 'Convert spaces to tabs',
+            split: 'Split a file into pieces',
+            csplit: 'Split a file based on context',
+            join: 'Join lines of two files',
+            sc: 'Spreadsheet calculator',
+            lsof: 'List open files',
+            strace: 'Trace system calls',
+            ltrace: 'Trace library calls',
+            nc: 'Netcat, network utility',
+            socat: 'Multipurpose relay',
+            nmap: 'Network exploration tool',
+            iftop: 'Display network bandwidth usage',
+            iotop: 'Display I/O usage',
+            pv: 'Monitor data through a pipeline',
+            tree: 'Display directory tree',
+            arch: 'Display system architecture',
+            nproc: 'Display number of CPU cores',
+            od: 'Dump files in octal or other formats',
+            hexdump: 'Display file contents in hexadecimal',
+            strings: 'Extract printable strings from files',
+            readlink: 'Display symbolic link target',
+            mktemp: 'Create a temporary file or directory',
+            flock: 'Manage file locks',
+            chroot: 'Change root directory',
+            pivot_root: 'Change root filesystem',
+            nsenter: 'Run program in a namespace',
+            unshare: 'Run program with unshared resources',
+            dtrace: 'Dynamic tracing framework',
+            ktrace: 'Kernel tracing (BSD)',
+            perf: 'Performance analysis tool',
+            ethtool: 'Display and configure network interfaces',
+            iw: 'Configure wireless devices',
+            iwconfig: 'Configure wireless interfaces',
+            rfkill: 'Enable or disable wireless devices',
+            modprobe: 'Load kernel modules',
+            lsmod: 'List loaded kernel modules',
+            insmod: 'Insert a kernel module',
+            rmmod: 'Remove a kernel module',
+            depmod: 'Generate module dependencies',
+            sysctl: 'Configure kernel parameters'
+        };
 
-        // Adjust textarea height based on content
-        commandInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-            
-            // Check if we're in multiline mode
-            isMultiline = this.value.includes('\n');
-        });
+        // Terminal logic
+        const terminal = document.getElementById('terminal');
+        const input = document.getElementById('terminal-input');
+        const helpContent = document.getElementById('help-content');
+        const fs = new FileSystem();
+        let commandHistory = [];
+        let historyIndex = -1;
 
-        // Handle keyboard events
-        commandInput.addEventListener('keydown', function(e) {
-            // Execute command on Enter (without Shift)
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                executeCommand(this.value);
-            }
-            
-            // Navigate history with up/down arrows
-            if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                if (commandHistory.length > 0) {
-                    if (historyIndex === -1) {
-                        historyIndex = commandHistory.length;
-                    }
-                    historyIndex = Math.max(0, historyIndex - 1);
-                    this.value = commandHistory[historyIndex];
-                    adjustTextareaHeight();
+        // Populate help section
+        helpContent.innerHTML = Object.entries(commandHelp)
+            .map(([cmd, desc]) => `<div class="mb-2"><strong class="text-green-400">${cmd}</strong>: ${desc}</div>`)
+            .join('');
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const command = input.value.trim();
+                if (command) {
+                    commandHistory.push(command);
+                    historyIndex = commandHistory.length;
+                    const [cmd, ...args] = command.split(' ').filter(Boolean);
+                    const output = commands[cmd] ? commands[cmd](fs, args) : `${cmd}: command not found`;
+                    terminal.innerHTML += `<div class="command-output"><span class="text-green-400">$ ${command}</span><br>${output}</div>`;
+                    terminal.scrollTop = terminal.scrollHeight;
+                    input.value = '';
+                }
+            } else if (e.key === 'ArrowUp') {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    input.value = commandHistory[historyIndex] || '';
                 }
             } else if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                if (commandHistory.length > 0 && historyIndex >= 0) {
-                    historyIndex = Math.min(commandHistory.length - 1, historyIndex + 1);
-                    if (historyIndex === commandHistory.length - 1) {
-                        this.value = '';
-                    } else {
-                        this.value = commandHistory[historyIndex];
-                    }
-                    adjustTextareaHeight();
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    input.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    input.value = '';
                 }
-            }
-            
-            // Clear command with Escape key
-            if (e.key === 'Escape') {
-                this.value = '';
-                this.style.height = '24px';
-                isMultiline = false;
-            }
-            
-            // Clear terminal with Ctrl+L
-            if (e.key === 'l' && e.ctrlKey) {
-                e.preventDefault();
-                clearTerminal();
-            }
-            
-            // Autocomplete with Tab key
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                autoComplete();
             }
         });
 
-        function adjustTextareaHeight() {
-            commandInput.style.height = 'auto';
-            commandInput.style.height = (commandInput.scrollHeight) + 'px';
-            isMultiline = commandInput.value.includes('\n');
-        }
-
-        function executeCommand(cmd) {
-            if (!cmd.trim() && !isMultiline) return;
-            
-            // Add to command history
-            if (cmd.trim()) {
-                commandHistory.push(cmd);
-                historyIndex = -1;
-            }
-            
-            // Create command block
-            const commandBlock = document.createElement('div');
-            commandBlock.className = 'command-block';
-            
-            // Format the command with line numbers if multiline
-            let formattedCommand = '';
-            if (isMultiline) {
-                const lines = cmd.split('\n');
-                formattedCommand = lines.map((line, i) => 
-                    `<div>${i > 0 ? '<span class="multiline-indicator">> </span>' : ''}${escapeHtml(line)}</div>`
-                ).join('');
-            } else {
-                formattedCommand = escapeHtml(cmd);
-            }
-            
-            commandBlock.innerHTML = `
-                <div>
-                    <span class="prompt"><span class="user">user</span>@<span class="host">web-terminal</span>:<span class="path">${currentDirectory}</span>$</span>
-                    ${formattedCommand}
-                </div>
-            `;
-            
-            // Create output element
-            const outputElement = document.createElement('div');
-            outputElement.className = 'output';
-            
-            // Process the command
-            processCommand(cmd, outputElement);
-            
-            // Add elements to terminal
-            terminalOutput.insertBefore(commandBlock, terminalOutput.lastElementChild);
-            terminalOutput.insertBefore(outputElement, terminalOutput.lastElementChild);
-            
-            // Clear input and reset
-            commandInput.value = '';
-            commandInput.style.height = '24px';
-            isMultiline = false;
-            
-            // Scroll to bottom
-            terminalOutput.scrollTop = terminalOutput.scrollHeight;
-        }
-
-        function processCommand(cmd, outputElement) {
-            const command = cmd.trim();
-            const commandLower = command.toLowerCase();
-            const args = command.split(' ').slice(1);
-            
-            if (commandLower === 'clear' || commandLower === 'cls') {
-                clearTerminal();
-                return;
-            }
-            
-            if (commandLower === 'help') {
-                outputElement.innerHTML = `
-                    <div class="info">Available commands:</div>
-                    <table class="help-table">
-                        <tr><td><span class="success">help</span></td><td>Show this help message</td></tr>
-                        <tr><td><span class="success">clear</span></td><td>Clear the terminal screen</td></tr>
-                        <tr><td><span class="success">ls [path]</span></td><td>List directory contents</td></tr>
-                        <tr><td><span class="success">pwd</span></td><td>Print working directory</td></tr>
-                        <tr><td><span class="success">whoami</span></td><td>Display current user</td></tr>
-                        <tr><td><span class="success">date</span></td><td>Show current date and time</td></tr>
-                        <tr><td><span class="success">echo [text]</span></td><td>Display a line of text</td></tr>
-                        <tr><td><span class="success">cat [file]</span></td><td>Concatenate and display file content</td></tr>
-                        <tr><td><span class="success">cd [dir]</span></td><td>Change directory</td></tr>
-                        <tr><td><span class="success">mkdir [dir]</span></td><td>Create a directory</td></tr>
-                        <tr><td><span class="success">touch [file]</span></td><td>Create a file</td></tr>
-                        <tr><td><span class="success">rm [file]</span></td><td>Remove a file</td></tr>
-                        <tr><td><span class="success">find [name]</span></td><td>Find files</td></tr>
-                        <tr><td><span class="success">grep [pattern] [file]</span></td><td>Search text in files</td></tr>
-                        <tr><td><span class="success">ps</span></td><td>Display process status</td></tr>
-                        <tr><td><span class="success">top</span></td><td>Display system processes</td></tr>
-                        <tr><td><span class="success">df</span></td><td>Display disk space</td></tr>
-                        <tr><td><span class="success">du</span></td><td>Display directory space usage</td></tr>
-                        <tr><td><span class="success">history</span></td><td>Show command history</td></tr>
-                        <tr><td><span class="success">uname</span></td><td>Show system information</td></tr>
-                    </table>
-                    <div class="info">You can also use multi-line commands for scripting</div>
-                `;
-                return;
-            }
-            
-            if (commandLower === 'ls' || commandLower.startsWith('ls ')) {
-                const path = args[0] || '.';
-                outputElement.innerHTML = listDirectory(path);
-                return;
-            }
-            
-            if (commandLower === 'pwd') {
-                outputElement.innerHTML = `/home/user${currentDirectory === '~' ? '' : currentDirectory}`;
-                return;
-            }
-            
-            if (commandLower === 'whoami') {
-                outputElement.innerHTML = `user`;
-                return;
-            }
-            
-            if (commandLower === 'date') {
-                outputElement.innerHTML = new Date().toString();
-                return;
-            }
-            
-            if (commandLower.startsWith('echo ')) {
-                outputElement.textContent = cmd.substring(5);
-                return;
-            }
-            
-            if (commandLower.startsWith('cat ')) {
-                const file = cmd.substring(4).trim();
-                outputElement.innerHTML = catFile(file);
-                return;
-            }
-            
-            if (commandLower.startsWith('cd ')) {
-                const dir = cmd.substring(3).trim();
-                changeDirectory(dir, outputElement);
-                return;
-            }
-            
-            if (commandLower.startsWith('mkdir ')) {
-                const dir = cmd.substring(6).trim();
-                outputElement.innerHTML = makeDirectory(dir);
-                return;
-            }
-            
-            if (commandLower.startsWith('touch ')) {
-                const file = cmd.substring(6).trim();
-                outputElement.innerHTML = touchFile(file);
-                return;
-            }
-            
-            if (commandLower.startsWith('rm ')) {
-                const file = cmd.substring(3).trim();
-                outputElement.innerHTML = removeFile(file);
-                return;
-            }
-            
-            if (commandLower.startsWith('find ')) {
-                const name = cmd.substring(5).trim();
-                outputElement.innerHTML = findFiles(name);
-                return;
-            }
-            
-            if (commandLower.startsWith('grep ')) {
-                const pattern = args[0];
-                const file = args[1];
-                outputElement.innerHTML = grepFile(pattern, file);
-                return;
-            }
-            
-            if (commandLower === 'ps') {
-                outputElement.innerHTML = `
-  PID TTY          TIME CMD
-    1 pts/0    00:00:00 bash
-   42 pts/0    00:00:00 node
-   87 pts/0    00:00:00 python
-  103 pts/0    00:00:00 ps
-                `;
-                return;
-            }
-            
-            if (commandLower === 'top') {
-                outputElement.innerHTML = `
-Tasks: 5 total,   1 running,   4 sleeping,   0 stopped,   0 zombie
-%Cpu(s):  1.5 us,  0.5 sy,  0.0 ni, 98.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
-MiB Mem :   7954.2 total,   1024.8 free,   4096.0 used,   2833.4 buff/cache
-MiB Swap:   2048.0 total,   2048.0 free,      0.0 used.   3568.2 avail Mem 
-
-  PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
-   42 user      20   0   18056   3456   2944 R   6.2   0.0   0:00.03 node
-    1 user      20   0    7832   4560   3672 S   0.0   0.1   0:00.12 bash
-   87 user      20   0   12544   6784   5120 S   0.0   0.1   0:00.07 python
-                `;
-                return;
-            }
-            
-            if (commandLower === 'df') {
-                outputElement.innerHTML = `
-Filesystem      Size  Used Avail Use% Mounted on
-/dev/sda1        20G  7.2G   12G  39% /
-tmpfs           3.9G     0  3.9G   0% /dev/shm
-/dev/sdb1       100G   25G   75G  25% /home
-                `;
-                return;
-            }
-            
-            if (commandLower === 'du') {
-                outputElement.innerHTML = `
-12K     ./documents
-8.0K    ./downloads
-20K     ./projects
-40K     .
-                `;
-                return;
-            }
-            
-            if (commandLower === 'history') {
-                outputElement.innerHTML = commandHistory.map((cmd, i) => 
-                    `  ${i + 1}  ${cmd}`
-                ).join('<br>');
-                return;
-            }
-            
-            if (commandLower === 'uname') {
-                outputElement.innerHTML = 'Linux web-terminal 5.15.0-76-generic #83-Ubuntu SMP Thu Jun 15 10:30:17 UTC 2023 x86_64 x86_64 x86_64 GNU/Linux';
-                return;
-            }
-            
-            if (commandLower === 'neofetch') {
-                outputElement.innerHTML = `
-                    <div class="ps1">            .-/+oossssoo+/-.               </div>
-                    <div class="ps1">        \`:+ssssssssssssssssss+:\`           </div>
-                    <div class="ps1">      -+ssssssssssssssssssyyssss+-         </div>
-                    <div class="ps1">    .ossssssssssssssssssdMMMNysssso.       </div>
-                    <div class="ps1">   /ssssssssssshdmmNNmmyNMMMMhssssss/      </div>
-                    <div class="ps1">  +ssssssssshmydMMMMMMMNddddyssssssss+     </div>
-                    <div class="ps1"> /sssssssshNMMMyhhyyyyhmNMMMNhssssssss/    </div>
-                    <div class="ps1">.ssssssssdMMMNhsssssssssshNMMMdssssssss.   </div>
-                    <div class="ps1">+sssshhhyNMMNyssssssssssssyNMMMysssssss+   </div>
-                    <div class="ps1">ossyNMMMNyMMhsssssssssssssshmmmhssssssso   </div>
-                    <div class="ps1">ossyNMMMNyMMhsssssssssssssshmmmhssssssso   </div>
-                    <div class="ps1">+sssshhhyNMMNyssssssssssssyNMMMysssssss+   </div>
-                    <div class="ps1">.ssssssssdMMMNhsssssssssshNMMMdssssssss.   </div>
-                    <div class="ps1"> /sssssssshNMMMyhhyyyyhmNMMMNhssssssss/    </div>
-                    <div class="ps1">  +sssssssssdmydMMMMMMMMddddyssssssss+     </div>
-                    <div class="ps1">   /ssssssssssshdmNNNNmyNMMMMhssssss/      </div>
-                    <div class="ps1">    .ossssssssssssssssssdMMMNysssso.       </div>
-                    <div class="ps1">      -+sssssssssssssssssyyyssss+-         </div>
-                    <div class="ps1">        \`:+ssssssssssssssssss+:\`           </div>
-                    <div class="ps1">            .-/+oossssoo+/-.               </div>
-                    <br>
-                    <div class="ps2">user@web-terminal</div>
-                    <div class="ps2">-------------</div>
-                    <div class="ps2">OS: Web Terminal 1.2.0</div>
-                    <div class="ps2">Host: Browser-based Terminal</div>
-                    <div class="ps2">Kernel: 5.15.0-76-generic</div>
-                    <div class="ps2">Uptime: 2 hours, 15 mins</div>
-                    <div class="ps2">Shell: bash 5.1.16</div>
-                    <div class="ps2">CPU: JavaScript Engine</div>
-                    <div class="ps2">Memory: 1024MB / 4096MB</div>
-                `;
-                return;
-            }
-            
-            if (cmd.trim() !== '') {
-                outputElement.innerHTML = `<span class="error">Command not found: ${cmd}</span>`;
-            }
-        }
-
-        function clearTerminal() {
-            const children = terminalOutput.children;
-            const length = children.length;
-            
-            // Remove all children except the last one (input line)
-            for (let i = length - 2; i >= 0; i--) {
-                terminalOutput.removeChild(children[i]);
-            }
-        }
-
-        function escapeHtml(unsafe) {
-            return unsafe
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        function listDirectory(path) {
-            if (path === '/' || path === '/home') {
-                return `
-total 4<br>
-drwxr-xr-x  3 user user  4096 Jun 15 10:30 <span class="directory">user</span>
-                `;
-            }
-            
-            if (path === '..' || path === '../') {
-                return `
-total 4<br>
-drwxr-xr-x  3 user user  4096 Jun 15 10:30 <span class="directory">user</span>
-                `;
-            }
-            
-            return `
-total 32<br>
-drwxr-xr-x  5 user user  4096 Jun 15 10:30 <span class="directory">.</span><br>
-drwxr-xr-x 17 user user  4096 Jun 15 09:45 <span class="directory">..</span><br>
--rw-r--r--  1 user user   220 Jun 15 10:20 <span class="file">.bashrc</span><br>
-drwxr-xr-x  2 user user  4096 Jun 15 10:25 <span class="directory">documents</span><br>
-drwxr-xr-x  2 user user  4096 Jun 15 10:26 <span class="directory">downloads</span><br>
--rw-r--r--  1 user user  1234 Jun 15 10:30 <span class="file">example.txt</span><br>
--rw-r--r--  1 user user   125 Jun 15 10:32 <span class="file">README.md</span><br>
-drwxr-xr-x  3 user user  4096 Jun 15 10:25 <span class="directory">projects</span>
-            `;
-        }
-
-        function catFile(filename) {
-            if (filename === 'example.txt') {
-                return `This is the content of example.txt<br>You can use the cat command to display file contents`;
-            } else if (filename === '.bashrc') {
-                return `export PATH=$PATH:/usr/local/bin<br>export EDITOR=nano`;
-            } else if (filename === 'README.md') {
-                return `# Welcome to the Web Terminal<br><br>This is a simulated terminal experience in your browser.`;
-            } else {
-                return `<span class="error">cat: ${filename}: No such file or directory</span>`;
-            }
-        }
-
-        function changeDirectory(dir, outputElement) {
-            if (dir === '~' || dir === '' || dir === '/home/user') {
-                currentDirectory = '~';
-            } else if (dir === 'documents') {
-                currentDirectory = '~/documents';
-            } else if (dir === 'projects') {
-                currentDirectory = '~/projects';
-            } else if (dir === 'downloads') {
-                currentDirectory = '~/downloads';
-            } else if (dir === '..') {
-                if (currentDirectory !== '~') {
-                    currentDirectory = '~';
-                }
-            } else {
-                outputElement.innerHTML = `<span class="error">bash: cd: ${dir}: No such file or directory</span>`;
-            }
-        }
-
-        function makeDirectory(dir) {
-            return `<span class="success">Created directory '${dir}'</span>`;
-        }
-
-        function touchFile(file) {
-            return `<span class="success">Created file '${file}'</span>`;
-        }
-
-        function removeFile(file) {
-            return `<span class="success">Removed '${file}'</span>`;
-        }
-
-        function findFiles(name) {
-            return `./documents/${name}.txt<br>./projects/web-terminal/${name}.js`;
-        }
-
-        function grepFile(pattern, file) {
-            if (file === 'example.txt') {
-                return `This is the content of example.txt<br>You can use the cat command to display file contents`;
-            } else {
-                return `<span class="error">grep: ${file}: No such file or directory</span>`;
-            }
-        }
-
-        function autoComplete() {
-            // Simple autocomplete implementation
-            const input = commandInput.value;
-            const commands = ['ls', 'cd', 'cat', 'echo', 'pwd', 'whoami', 'date', 'clear', 'help', 'mkdir', 'touch', 'rm', 'find', 'grep', 'ps', 'top', 'df', 'du', 'history', 'uname', 'neofetch'];
-            
-            const matching = commands.filter(cmd => cmd.startsWith(input));
-            
-            if (matching.length === 1) {
-                commandInput.value = matching[0] + ' ';
-                adjustTextareaHeight();
-            } else if (matching.length > 1) {
-                // Display possibilities
-                const outputElement = document.createElement('div');
-                outputElement.className = 'output';
-                outputElement.innerHTML = matching.join('  ');
-                terminalOutput.insertBefore(outputElement, terminalOutput.lastElementChild);
-                terminalOutput.scrollTop = terminalOutput.scrollHeight;
-            }
-        }
+        // Initialize file system with some example content
+        commands.mkdir(fs, ['home']);
+        commands.mkdir(fs, ['home/user']);
+        commands.touch(fs, ['home/user/file.txt']);
+        commands.touch(fs, ['home/user/readme.md']);
     </script>
 </body>
 </html>
