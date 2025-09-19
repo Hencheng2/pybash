@@ -335,34 +335,7 @@
         let fileSystem = {
             '~': {
                 type: 'directory',
-                content: {
-                    'documents': {
-                        type: 'directory',
-                        content: {
-                            'notes.txt': {
-                                type: 'file',
-                                content: 'Important notes\nProject ideas\nMeeting minutes'
-                            },
-                            'projects': {
-                                type: 'directory',
-                                content: {}
-                            }
-                        }
-                    },
-                    'downloads': {
-                        type: 'directory',
-                        content: {
-                            'archive.zip': {
-                                type: 'file',
-                                content: 'Zipped archive (binary content)'
-                            }
-                        }
-                    },
-                    'README.md': {
-                        type: 'file',
-                        content: '# Welcome to the Web Terminal\n\nThis is a simulated terminal experience in your browser.'
-                    }
-                }
+                content: {}
             }
         };
         
@@ -521,6 +494,8 @@
                         <tr><td><span class="success">rmdir [dir]</span></td><td>Remove a directory</td></tr>
                         <tr><td><span class="success">touch [file]</span></td><td>Create a file</td></tr>
                         <tr><td><span class="success">rm [file]</span></td><td>Remove a file</td></tr>
+                        <tr><td><span class="success">cp [src] [dest]</span></td><td>Copy files or directories</td></tr>
+                        <tr><td><span class="success">mv [src] [dest]</span></td><td>Move or rename files</td></tr>
                     </table>
                     <div class="info">You can also use multi-line commands for scripting</div>
                 `;
@@ -588,14 +563,36 @@
                 return;
             }
             
+            if (commandLower.startsWith('cp ')) {
+                const parts = command.split(' ').slice(1);
+                if (parts.length >= 2) {
+                    outputElement.innerHTML = copyFile(parts[0], parts[1]);
+                } else {
+                    outputElement.innerHTML = `<span class="error">cp: missing file operand</span>`;
+                }
+                return;
+            }
+            
+            if (commandLower.startsWith('mv ')) {
+                const parts = command.split(' ').slice(1);
+                if (parts.length >= 2) {
+                    outputElement.innerHTML = moveFile(parts[0], parts[1]);
+                } else {
+                    outputElement.innerHTML = `<span class="error">mv: missing file operand</span>`;
+                }
+                return;
+            }
+            
             if (commandLower === 'ls' || commandLower.startsWith('ls ')) {
                 const path = args[0] || '.';
                 outputElement.innerHTML = listDirectory(path);
                 return;
             }
             
+            // Handle all other commands
             if (cmd.trim() !== '') {
-                outputElement.innerHTML = `<span class="error">Command not found: ${cmd}</span>`;
+                const baseCommand = command.split(' ')[0];
+                outputElement.innerHTML = `<div class="info">Command '${baseCommand}' executed successfully.</div>`;
             }
         }
 
@@ -634,39 +631,43 @@
                         }
                     }
                     
-                    return formatDirectoryListing(parentDir, true);
+                    return formatDirectoryListing(parentDir);
                 } else {
-                    return formatDirectoryListing(fileSystem, true);
+                    return formatDirectoryListing(fileSystem);
                 }
             } else if (path !== '.' && path !== './') {
                 // Handle specific path
                 if (targetDir[path] && targetDir[path].type === 'directory') {
-                    return formatDirectoryListing(targetDir[path].content, true);
+                    return formatDirectoryListing(targetDir[path].content);
                 } else {
                     return `<span class="error">ls: cannot access '${path}': No such file or directory</span>`;
                 }
             } else {
                 // Handle current directory
-                return formatDirectoryListing(targetDir, false);
+                return formatDirectoryListing(targetDir);
             }
         }
 
-        function formatDirectoryListing(dir, showAll) {
+        function formatDirectoryListing(dir) {
             if (!dir) return `<span class="error">Directory not found</span>`;
             
-            let result = 'total ' + (Object.keys(dir).length * 4) + '<br>';
+            let result = '';
             
-            // Always show . and ..
-            result += `drwxr-xr-x  2 user user 4096 Jun 15 10:30 <span class="directory">.</span><br>`;
-            result += `drwxr-xr-x  3 user user 4096 Jun 15 10:30 <span class="directory">..</span><br>`;
+            // Show . and .. for navigation
+            result += `<span class="directory">.</span><br>`;
+            result += `<span class="directory">..</span><br>`;
             
             for (const name in dir) {
                 const item = dir[name];
                 if (item.type === 'directory') {
-                    result += `drwxr-xr-x  2 user user 4096 Jun 15 10:30 <span class="directory">${name}</span><br>`;
+                    result += `<span class="directory">${name}</span><br>`;
                 } else {
-                    result += `-rw-r--r--  1 user user ${item.content.length} Jun 15 10:30 <span class="file">${name}</span><br>`;
+                    result += `<span class="file">${name}</span><br>`;
                 }
+            }
+            
+            if (result === '') {
+                result = '<div class="info">Directory is empty</div>';
             }
             
             return result;
@@ -758,6 +759,27 @@
             }
         }
 
+        function copyFile(src, dest) {
+            const currentDir = getCurrentDirObject();
+            if (currentDir && currentDir[src]) {
+                currentDir[dest] = JSON.parse(JSON.stringify(currentDir[src]));
+                return `<span class="success">'${src}' copied to '${dest}'</span>`;
+            } else {
+                return `<span class="error">cp: cannot copy '${src}': No such file or directory</span>`;
+            }
+        }
+
+        function moveFile(src, dest) {
+            const currentDir = getCurrentDirObject();
+            if (currentDir && currentDir[src]) {
+                currentDir[dest] = JSON.parse(JSON.stringify(currentDir[src]));
+                delete currentDir[src];
+                return `<span class="success">'${src}' moved to '${dest}'</span>`;
+            } else {
+                return `<span class="error">mv: cannot move '${src}': No such file or directory</span>`;
+            }
+        }
+
         function clearTerminal() {
             const children = terminalOutput.children;
             const length = children.length;
@@ -780,7 +802,7 @@
         function autoComplete() {
             // Simple autocomplete implementation
             const input = commandInput.value;
-            const commands = ['ls', 'cd', 'cat', 'echo', 'pwd', 'whoami', 'date', 'clear', 'help', 'mkdir', 'touch', 'rm', 'rmdir'];
+            const commands = ['ls', 'cd', 'cat', 'echo', 'pwd', 'whoami', 'date', 'clear', 'help', 'mkdir', 'touch', 'rm', 'rmdir', 'cp', 'mv'];
             
             const matching = commands.filter(cmd => cmd.startsWith(input));
             
