@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Terminal</title>
+    <title>Modern Web Terminal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -46,18 +46,7 @@
         .terminal-controls {
             display: flex;
             gap: 6px;
-            align-items: center;
         }
-
-        .control {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-
-        .close { background: #ff5f56; }
-        .minimize { background: #ffbd2e; }
-        .maximize { background: #27c93f; }
 
         .back-button {
             background: #1e7b1e;
@@ -78,12 +67,20 @@
             background: #2a9a2a;
         }
 
+        .control {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .close { background: #ff5f56; }
+        .minimize { background: #ffbd2e; }
+        .maximize { background: #27c93f; }
+
         .terminal-title {
             font-weight: 600;
             color: #f0f6fc;
             font-size: 11px;
-            flex-grow: 1;
-            text-align: center;
         }
 
         .terminal-body {
@@ -280,27 +277,6 @@
             .command-input {
                 font-size: 11px;
             }
-            
-            .terminal-header {
-                flex-wrap: wrap;
-            }
-            
-            .back-button {
-                order: 1;
-                margin-right: 0;
-                margin-left: auto;
-            }
-            
-            .terminal-controls {
-                order: 0;
-            }
-            
-            .terminal-title {
-                order: 2;
-                flex-basis: 100%;
-                text-align: left;
-                margin-top: 5px;
-            }
         }
 
         @media (max-width: 480px) {
@@ -319,11 +295,6 @@
             
             .shortcut {
                 font-size: 9px;
-            }
-            
-            .back-button {
-                font-size: 10px;
-                padding: 3px 6px;
             }
         }
     </style>
@@ -521,7 +492,7 @@
         function processCommand(cmd, outputElement) {
             const command = cmd.trim();
             const commandLower = command.toLowerCase();
-            const args = command.split('').slice(1);
+            const args = command.split(' ').slice(1);
             
             if (commandLower === 'clear' || commandLower === 'cls') {
                 clearTerminal();
