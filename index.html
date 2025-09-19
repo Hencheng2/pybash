@@ -199,6 +199,35 @@
             border-radius: 4px;
         }
 
+        .ps1 {
+            color: #7ee787;
+        }
+
+        .ps2 {
+            color: #ffa657;
+        }
+
+        .cpu-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .cpu-bar {
+            height: 10px;
+            background: #21262d;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+
+        .cpu-bar-fill {
+            height: 100%;
+            background: #3fb950;
+            border-radius: 5px;
+        }
+
         @media (max-width: 768px) {
             .terminal-footer {
                 flex-direction: column;
@@ -207,6 +236,10 @@
             
             .terminal-body {
                 height: 400px;
+            }
+            
+            .cpu-info {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -224,7 +257,7 @@
         </div>
         
         <div class="terminal-body" id="terminalOutput">
-            <div class="output info">Welcome to Modern Web Terminal v1.0.0</div>
+            <div class="output info">Welcome to Modern Web Terminal v1.2.0</div>
             <div class="output info">Type 'help' to see available commands, 'clear' to clear the screen</div>
             <div class="output info">Use Shift+Enter for multi-line input. Press Enter to execute.</div>
             <div class="output"><br></div>
@@ -279,6 +312,28 @@
         let commandHistory = [];
         let historyIndex = -1;
         let isMultiline = false;
+        let currentDirectory = '~';
+        let fileSystem = {
+            '~': {
+                '.bashrc': 'export PATH=$PATH:/usr/local/bin\nexport EDITOR=nano',
+                'example.txt': 'This is the content of example.txt\nYou can use the cat command to display file contents',
+                'README.md': '# Welcome to the Web Terminal\n\nThis is a simulated terminal experience in your browser.',
+                'documents': {
+                    'report.pdf': 'PDF document (simulated)',
+                    'notes.txt': 'Important notes here'
+                },
+                'downloads': {
+                    'package.zip': 'Zipped archive (simulated)'
+                },
+                'projects': {
+                    'web-terminal': {
+                        'index.html': 'HTML file for the terminal',
+                        'style.css': 'CSS styles for the terminal',
+                        'script.js': 'JavaScript functionality'
+                    }
+                }
+            }
+        };
 
         // Focus the input on load
         commandInput.focus();
@@ -336,6 +391,12 @@
                 e.preventDefault();
                 clearTerminal();
             }
+            
+            // Autocomplete with Tab key
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                autoComplete();
+            }
         });
 
         function adjustTextareaHeight() {
@@ -370,7 +431,7 @@
             
             commandBlock.innerHTML = `
                 <div>
-                    <span class="prompt"><span class="user">user</span>@<span class="host">web-terminal</span>:<span class="path">~</span>$</span>
+                    <span class="prompt"><span class="user">user</span>@<span class="host">web-terminal</span>:<span class="path">${currentDirectory}</span>$</span>
                     ${formattedCommand}
                 </div>
             `;
@@ -396,72 +457,205 @@
         }
 
         function processCommand(cmd, outputElement) {
-            const command = cmd.trim().toLowerCase();
+            const command = cmd.trim();
+            const commandLower = command.toLowerCase();
+            const args = command.split(' ').slice(1);
             
-            if (command === 'clear' || command === 'cls') {
+            if (commandLower === 'clear' || commandLower === 'cls') {
                 clearTerminal();
                 return;
             }
             
-            if (command === 'help') {
+            if (commandLower === 'help') {
                 outputElement.innerHTML = `
                     <div class="info">Available commands:</div>
                     <table class="help-table">
                         <tr><td><span class="success">help</span></td><td>Show this help message</td></tr>
                         <tr><td><span class="success">clear</span></td><td>Clear the terminal screen</td></tr>
-                        <tr><td><span class="success">ls</span></td><td>List directory contents</td></tr>
+                        <tr><td><span class="success">ls [path]</span></td><td>List directory contents</td></tr>
                         <tr><td><span class="success">pwd</span></td><td>Print working directory</td></tr>
                         <tr><td><span class="success">whoami</span></td><td>Display current user</td></tr>
                         <tr><td><span class="success">date</span></td><td>Show current date and time</td></tr>
                         <tr><td><span class="success">echo [text]</span></td><td>Display a line of text</td></tr>
                         <tr><td><span class="success">cat [file]</span></td><td>Concatenate and display file content</td></tr>
+                        <tr><td><span class="success">cd [dir]</span></td><td>Change directory</td></tr>
+                        <tr><td><span class="success">mkdir [dir]</span></td><td>Create a directory</td></tr>
+                        <tr><td><span class="success">touch [file]</span></td><td>Create a file</td></tr>
+                        <tr><td><span class="success">rm [file]</span></td><td>Remove a file</td></tr>
+                        <tr><td><span class="success">find [name]</span></td><td>Find files</td></tr>
+                        <tr><td><span class="success">grep [pattern] [file]</span></td><td>Search text in files</td></tr>
+                        <tr><td><span class="success">ps</span></td><td>Display process status</td></tr>
+                        <tr><td><span class="success">top</span></td><td>Display system processes</td></tr>
+                        <tr><td><span class="success">df</span></td><td>Display disk space</td></tr>
+                        <tr><td><span class="success">du</span></td><td>Display directory space usage</td></tr>
+                        <tr><td><span class="success">history</span></td><td>Show command history</td></tr>
+                        <tr><td><span class="success">uname</span></td><td>Show system information</td></tr>
                     </table>
                     <div class="info">You can also use multi-line commands for scripting</div>
                 `;
                 return;
             }
             
-            if (command === 'ls' || command === 'ls -la') {
-                outputElement.innerHTML = `
-                    total 32<br>
-                    drwxr-xr-x  5 user user  4096 Jun 15 10:30 <span class="directory">.</span><br>
-                    drwxr-xr-x 17 user user  4096 Jun 15 09:45 <span class="directory">..</span><br>
-                    -rw-r--r--  1 user user   220 Jun 15 10:20 <span class="file">.bashrc</span><br>
-                    drwxr-xr-x  2 user user  4096 Jun 15 10:25 <span class="directory">documents</span><br>
-                    drwxr-xr-x  2 user user  4096 Jun 15 10:26 <span class="directory">downloads</span><br>
-                    -rw-r--r--  1 user user  1234 Jun 15 10:30 <span class="file">example.txt</span><br>
-                    drwxr-xr-x  2 user user  4096 Jun 15 10:25 <span class="directory">projects</span>
-                `;
+            if (commandLower === 'ls' || commandLower.startsWith('ls ')) {
+                const path = args[0] || '.';
+                outputElement.innerHTML = listDirectory(path);
                 return;
             }
             
-            if (command === 'pwd') {
-                outputElement.innerHTML = `/home/user`;
+            if (commandLower === 'pwd') {
+                outputElement.innerHTML = `/home/user${currentDirectory === '~' ? '' : currentDirectory}`;
                 return;
             }
             
-            if (command === 'whoami') {
+            if (commandLower === 'whoami') {
                 outputElement.innerHTML = `user`;
                 return;
             }
             
-            if (command === 'date') {
+            if (commandLower === 'date') {
                 outputElement.innerHTML = new Date().toString();
                 return;
             }
             
-            if (command.startsWith('echo ')) {
+            if (commandLower.startsWith('echo ')) {
                 outputElement.textContent = cmd.substring(5);
                 return;
             }
             
-            if (command.startsWith('cat ')) {
+            if (commandLower.startsWith('cat ')) {
                 const file = cmd.substring(4).trim();
-                if (file === 'example.txt') {
-                    outputElement.innerHTML = `This is the content of example.txt<br>You can use the cat command to display file contents`;
-                } else {
-                    outputElement.innerHTML = `<span class="error">cat: ${file}: No such file or directory</span>`;
-                }
+                outputElement.innerHTML = catFile(file);
+                return;
+            }
+            
+            if (commandLower.startsWith('cd ')) {
+                const dir = cmd.substring(3).trim();
+                changeDirectory(dir, outputElement);
+                return;
+            }
+            
+            if (commandLower.startsWith('mkdir ')) {
+                const dir = cmd.substring(6).trim();
+                outputElement.innerHTML = makeDirectory(dir);
+                return;
+            }
+            
+            if (commandLower.startsWith('touch ')) {
+                const file = cmd.substring(6).trim();
+                outputElement.innerHTML = touchFile(file);
+                return;
+            }
+            
+            if (commandLower.startsWith('rm ')) {
+                const file = cmd.substring(3).trim();
+                outputElement.innerHTML = removeFile(file);
+                return;
+            }
+            
+            if (commandLower.startsWith('find ')) {
+                const name = cmd.substring(5).trim();
+                outputElement.innerHTML = findFiles(name);
+                return;
+            }
+            
+            if (commandLower.startsWith('grep ')) {
+                const pattern = args[0];
+                const file = args[1];
+                outputElement.innerHTML = grepFile(pattern, file);
+                return;
+            }
+            
+            if (commandLower === 'ps') {
+                outputElement.innerHTML = `
+  PID TTY          TIME CMD
+    1 pts/0    00:00:00 bash
+   42 pts/0    00:00:00 node
+   87 pts/0    00:00:00 python
+  103 pts/0    00:00:00 ps
+                `;
+                return;
+            }
+            
+            if (commandLower === 'top') {
+                outputElement.innerHTML = `
+Tasks: 5 total,   1 running,   4 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  1.5 us,  0.5 sy,  0.0 ni, 98.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+MiB Mem :   7954.2 total,   1024.8 free,   4096.0 used,   2833.4 buff/cache
+MiB Swap:   2048.0 total,   2048.0 free,      0.0 used.   3568.2 avail Mem 
+
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+   42 user      20   0   18056   3456   2944 R   6.2   0.0   0:00.03 node
+    1 user      20   0    7832   4560   3672 S   0.0   0.1   0:00.12 bash
+   87 user      20   0   12544   6784   5120 S   0.0   0.1   0:00.07 python
+                `;
+                return;
+            }
+            
+            if (commandLower === 'df') {
+                outputElement.innerHTML = `
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        20G  7.2G   12G  39% /
+tmpfs           3.9G     0  3.9G   0% /dev/shm
+/dev/sdb1       100G   25G   75G  25% /home
+                `;
+                return;
+            }
+            
+            if (commandLower === 'du') {
+                outputElement.innerHTML = `
+12K     ./documents
+8.0K    ./downloads
+20K     ./projects
+40K     .
+                `;
+                return;
+            }
+            
+            if (commandLower === 'history') {
+                outputElement.innerHTML = commandHistory.map((cmd, i) => 
+                    `  ${i + 1}  ${cmd}`
+                ).join('<br>');
+                return;
+            }
+            
+            if (commandLower === 'uname') {
+                outputElement.innerHTML = 'Linux web-terminal 5.15.0-76-generic #83-Ubuntu SMP Thu Jun 15 10:30:17 UTC 2023 x86_64 x86_64 x86_64 GNU/Linux';
+                return;
+            }
+            
+            if (commandLower === 'neofetch') {
+                outputElement.innerHTML = `
+                    <div class="ps1">            .-/+oossssoo+/-.               </div>
+                    <div class="ps1">        \`:+ssssssssssssssssss+:\`           </div>
+                    <div class="ps1">      -+ssssssssssssssssssyyssss+-         </div>
+                    <div class="ps1">    .ossssssssssssssssssdMMMNysssso.       </div>
+                    <div class="ps1">   /ssssssssssshdmmNNmmyNMMMMhssssss/      </div>
+                    <div class="ps1">  +ssssssssshmydMMMMMMMNddddyssssssss+     </div>
+                    <div class="ps1"> /sssssssshNMMMyhhyyyyhmNMMMNhssssssss/    </div>
+                    <div class="ps1">.ssssssssdMMMNhsssssssssshNMMMdssssssss.   </div>
+                    <div class="ps1">+sssshhhyNMMNyssssssssssssyNMMMysssssss+   </div>
+                    <div class="ps1">ossyNMMMNyMMhsssssssssssssshmmmhssssssso   </div>
+                    <div class="ps1">ossyNMMMNyMMhsssssssssssssshmmmhssssssso   </div>
+                    <div class="ps1">+sssshhhyNMMNyssssssssssssyNMMMysssssss+   </div>
+                    <div class="ps1">.ssssssssdMMMNhsssssssssshNMMMdssssssss.   </div>
+                    <div class="ps1"> /sssssssshNMMMyhhyyyyhmNMMMNhssssssss/    </div>
+                    <div class="ps1">  +sssssssssdmydMMMMMMMMddddyssssssss+     </div>
+                    <div class="ps1">   /ssssssssssshdmNNNNmyNMMMMhssssss/      </div>
+                    <div class="ps1">    .ossssssssssssssssssdMMMNysssso.       </div>
+                    <div class="ps1">      -+sssssssssssssssssyyyssss+-         </div>
+                    <div class="ps1">        \`:+ssssssssssssssssss+:\`           </div>
+                    <div class="ps1">            .-/+oossssoo+/-.               </div>
+                    <br>
+                    <div class="ps2">user@web-terminal</div>
+                    <div class="ps2">-------------</div>
+                    <div class="ps2">OS: Web Terminal 1.2.0</div>
+                    <div class="ps2">Host: Browser-based Terminal</div>
+                    <div class="ps2">Kernel: 5.15.0-76-generic</div>
+                    <div class="ps2">Uptime: 2 hours, 15 mins</div>
+                    <div class="ps2">Shell: bash 5.1.16</div>
+                    <div class="ps2">CPU: JavaScript Engine</div>
+                    <div class="ps2">Memory: 1024MB / 4096MB</div>
+                `;
                 return;
             }
             
@@ -487,6 +681,108 @@
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
+        }
+
+        function listDirectory(path) {
+            if (path === '/' || path === '/home') {
+                return `
+total 4<br>
+drwxr-xr-x  3 user user  4096 Jun 15 10:30 <span class="directory">user</span>
+                `;
+            }
+            
+            if (path === '..' || path === '../') {
+                return `
+total 4<br>
+drwxr-xr-x  3 user user  4096 Jun 15 10:30 <span class="directory">user</span>
+                `;
+            }
+            
+            return `
+total 32<br>
+drwxr-xr-x  5 user user  4096 Jun 15 10:30 <span class="directory">.</span><br>
+drwxr-xr-x 17 user user  4096 Jun 15 09:45 <span class="directory">..</span><br>
+-rw-r--r--  1 user user   220 Jun 15 10:20 <span class="file">.bashrc</span><br>
+drwxr-xr-x  2 user user  4096 Jun 15 10:25 <span class="directory">documents</span><br>
+drwxr-xr-x  2 user user  4096 Jun 15 10:26 <span class="directory">downloads</span><br>
+-rw-r--r--  1 user user  1234 Jun 15 10:30 <span class="file">example.txt</span><br>
+-rw-r--r--  1 user user   125 Jun 15 10:32 <span class="file">README.md</span><br>
+drwxr-xr-x  3 user user  4096 Jun 15 10:25 <span class="directory">projects</span>
+            `;
+        }
+
+        function catFile(filename) {
+            if (filename === 'example.txt') {
+                return `This is the content of example.txt<br>You can use the cat command to display file contents`;
+            } else if (filename === '.bashrc') {
+                return `export PATH=$PATH:/usr/local/bin<br>export EDITOR=nano`;
+            } else if (filename === 'README.md') {
+                return `# Welcome to the Web Terminal<br><br>This is a simulated terminal experience in your browser.`;
+            } else {
+                return `<span class="error">cat: ${filename}: No such file or directory</span>`;
+            }
+        }
+
+        function changeDirectory(dir, outputElement) {
+            if (dir === '~' || dir === '' || dir === '/home/user') {
+                currentDirectory = '~';
+            } else if (dir === 'documents') {
+                currentDirectory = '~/documents';
+            } else if (dir === 'projects') {
+                currentDirectory = '~/projects';
+            } else if (dir === 'downloads') {
+                currentDirectory = '~/downloads';
+            } else if (dir === '..') {
+                if (currentDirectory !== '~') {
+                    currentDirectory = '~';
+                }
+            } else {
+                outputElement.innerHTML = `<span class="error">bash: cd: ${dir}: No such file or directory</span>`;
+            }
+        }
+
+        function makeDirectory(dir) {
+            return `<span class="success">Created directory '${dir}'</span>`;
+        }
+
+        function touchFile(file) {
+            return `<span class="success">Created file '${file}'</span>`;
+        }
+
+        function removeFile(file) {
+            return `<span class="success">Removed '${file}'</span>`;
+        }
+
+        function findFiles(name) {
+            return `./documents/${name}.txt<br>./projects/web-terminal/${name}.js`;
+        }
+
+        function grepFile(pattern, file) {
+            if (file === 'example.txt') {
+                return `This is the content of example.txt<br>You can use the cat command to display file contents`;
+            } else {
+                return `<span class="error">grep: ${file}: No such file or directory</span>`;
+            }
+        }
+
+        function autoComplete() {
+            // Simple autocomplete implementation
+            const input = commandInput.value;
+            const commands = ['ls', 'cd', 'cat', 'echo', 'pwd', 'whoami', 'date', 'clear', 'help', 'mkdir', 'touch', 'rm', 'find', 'grep', 'ps', 'top', 'df', 'du', 'history', 'uname', 'neofetch'];
+            
+            const matching = commands.filter(cmd => cmd.startsWith(input));
+            
+            if (matching.length === 1) {
+                commandInput.value = matching[0] + ' ';
+                adjustTextareaHeight();
+            } else if (matching.length > 1) {
+                // Display possibilities
+                const outputElement = document.createElement('div');
+                outputElement.className = 'output';
+                outputElement.innerHTML = matching.join('  ');
+                terminalOutput.insertBefore(outputElement, terminalOutput.lastElementChild);
+                terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            }
         }
     </script>
 </body>
